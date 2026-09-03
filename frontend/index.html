@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0D9488">
+  <title>AI Cognitive Gaming & Memory Assistance - NER India (SIH26003)</title>
+  <link rel="manifest" href="/static/manifest.json">
+  
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="/static/css/main.css">
+  <link rel="stylesheet" href="/static/css/patient.css">
+  <link rel="stylesheet" href="/static/css/caregiver.css">
+  <link rel="stylesheet" href="/static/css/doctor.css">
+  <link rel="stylesheet" href="/static/css/govt.css">
+</head>
+<body>
+
+  <!-- Top Navigation & Global Controls -->
+  <header class="top-navbar">
+    <div class="top-bar-inner">
+      <div class="brand-section">
+        <div class="app-logo">🧠</div>
+        <div class="brand-text">
+          <h1 data-i18n="app_title">NER Cognitive & Memory Care</h1>
+          <p>Dementia Support Platform for North Eastern Region (SIH26003)</p>
+        </div>
+      </div>
+      
+      <div class="top-controls">
+        <!-- Multilingual Language Selector -->
+        <select id="lang-selector" class="form-select" onchange="AppState.handleLanguageChange(this.value)" title="Choose Language">
+          <option value="en">English</option>
+          <option value="as">অসমীয়া (Assamese)</option>
+          <option value="bn">বাংলা (Bengali)</option>
+          <option value="mn">মৈতৈলোন্ (Manipuri)</option>
+          <option value="hi">हिन्दी (Hindi)</option>
+        </select>
+        
+        <!-- Voice Mode Toggle -->
+        <button id="voice-toggle-btn" class="btn btn-outline active" onclick="AppState.toggleVoiceMode()" title="Toggle Voice TTS">
+          🔊 <span data-i18n="voice_active">Voice Mode: ON</span>
+        </button>
+        
+        <!-- Offline / Online Network State Badge -->
+        <div id="network-status-badge" class="status-badge online" onclick="DB.toggleSimulatedNetwork()" title="Click to toggle simulated network condition">
+          <span class="pulse-dot green"></span>
+          <span data-i18n="online_status">Online (Cloud Synced)</span>
+        </div>
+        
+        <!-- Active Patient Switcher -->
+        <select id="global-patient-selector" class="form-select" onchange="AppState.handlePatientChange(this.value)" title="Active Patient">
+        </select>
+        
+        <!-- Onboarding Button -->
+        <button class="btn btn-primary btn-sm" onclick="AppState.openOnboardingModal()" data-i18n="onboarding_btn">
+          + Onboard New Patient
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 4 Roles Navigation Tabs -->
+  <nav class="role-tabs-bar">
+    <div class="role-tabs-inner">
+      <button class="role-nav-btn active" data-role="patient" onclick="AppState.switchRole('patient')">
+        <span>👴</span> <span data-i18n="role_patient">Patient</span>
+      </button>
+      <button class="role-nav-btn" data-role="caregiver" onclick="AppState.switchRole('caregiver')">
+        <span>🧑‍⚕️</span> <span data-i18n="role_caregiver">Caregiver</span>
+      </button>
+      <button class="role-nav-btn" data-role="doctor" onclick="AppState.switchRole('doctor')">
+        <span>🩺</span> <span data-i18n="role_doctor">Doctor / Clinician</span>
+      </button>
+      <button class="role-nav-btn" data-role="govt" onclick="AppState.switchRole('govt')">
+        <span>🏛️</span> <span data-i18n="role_govt">Government Health</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Main Dynamic View Container -->
+  <main class="main-content">
+    
+    <!-- ================= 1. PATIENT INTERFACE ================= -->
+    <section id="patient-role-container">
+      
+      <!-- Patient Home View -->
+      <div id="patient-home-view">
+        <div class="patient-hero-card">
+          <div class="hero-text">
+            <h2 id="patient-welcome-name">Welcome, Biren!</h2>
+            <p data-i18n="patient_subtitle">Let us exercise our memory and enjoy our day together.</p>
+          </div>
+          <div class="hero-actions">
+            <button class="btn-hero-voice" onclick="VoiceEngine.speak(document.getElementById('patient-welcome-name').textContent + '. ' + I18N.t('patient_subtitle'), I18N.currentLang)">
+              🔊 <span>Listen</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="patient-main-grid">
+          <!-- Left Col: Cognitive Games Grid -->
+          <div>
+            <div class="section-header">
+              <h3 data-i18n="cognitive_gym">Cognitive Games</h3>
+              <span class="badge primary">Level 1 - Calibrated</span>
+            </div>
+            
+            <div class="games-tactile-grid">
+              <!-- Game 1: Memory Recall -->
+              <button class="game-tactile-btn" onclick="GamesModule.startMemoryGame(AppState.currentPatient.current_difficulty || 1)">
+                <div class="game-tactile-icon">🧩</div>
+                <div class="game-tactile-info">
+                  <h4 data-i18n="game_memory">Memory Recall</h4>
+                  <p data-i18n="game_memory_desc">Find matching picture pairs</p>
+                </div>
+              </button>
+              
+              <!-- Game 2: Attention & Focus -->
+              <button class="game-tactile-btn" onclick="GamesModule.startAttentionGame(AppState.currentPatient.current_difficulty || 1)">
+                <div class="game-tactile-icon">🎯</div>
+                <div class="game-tactile-info">
+                  <h4 data-i18n="game_attention">Attention & Focus</h4>
+                  <p data-i18n="game_attention_desc">Spot the target object quickly</p>
+                </div>
+              </button>
+              
+              <!-- Game 3: Pattern Weaves -->
+              <button class="game-tactile-btn" onclick="GamesModule.startPatternGame(AppState.currentPatient.current_difficulty || 1)">
+                <div class="game-tactile-icon">🧵</div>
+                <div class="game-tactile-info">
+                  <h4 data-i18n="game_pattern">Pattern Weaves</h4>
+                  <p data-i18n="game_pattern_desc">Complete traditional NER textile patterns</p>
+                </div>
+              </button>
+              
+              <!-- Game 4: Family Member Photo Recall -->
+              <button class="game-tactile-btn" onclick="GamesModule.startFamilyGame(AppState.currentPatient.current_difficulty || 1)">
+                <div class="game-tactile-icon">👨‍👩‍👧‍👦</div>
+                <div class="game-tactile-info">
+                  <h4 data-i18n="game_family">Family Photo Recall</h4>
+                  <p data-i18n="game_family_desc">Recognize your beloved family members</p>
+                </div>
+              </button>
+              
+              <!-- Game 5: Cultural Heritage of NER -->
+              <button class="game-tactile-btn" onclick="GamesModule.startCulturalGame(AppState.currentPatient.current_difficulty || 1)">
+                <div class="game-tactile-icon">🏛️</div>
+                <div class="game-tactile-info">
+                  <h4 data-i18n="game_culture">NER Cultural Heritage</h4>
+                  <p data-i18n="game_culture_desc">Identify authentic North East items & festivals</p>
+                </div>
+              </button>
+            </div>
+            
+            <!-- Personal Companion Chatbot Hero CTA -->
+            <div class="companion-hero-cta" onclick="ChatbotCompanion.openChat()">
+              <div class="companion-cta-left">
+                <div class="companion-avatar-circle pulse-slow">🌺</div>
+                <div>
+                  <h4 style="margin:0; font-size:1.4rem; color:#581C87;" data-i18n="companion_chat">Talk with Mitra (Companion)</h4>
+                  <p style="margin:4px 0 0 0; color:#6B21A8; font-size:1.05rem;">Voice conversations, nostalgic songs, poems & pleasant memories</p>
+                </div>
+              </div>
+              <button class="btn btn-primary" style="background:#7C3AED; border:none; padding:12px 24px; font-size:1.1rem; border-radius:30px;">
+                💬 Start Chat
+              </button>
+            </div>
+          </div>
+          
+          <!-- Right Col: Daily Routine & Medication Schedule -->
+          <div>
+            <div class="patient-schedule-panel">
+              <div class="section-header">
+                <h3 data-i18n="todays_routine">Today's Schedule & Routine</h3>
+              </div>
+              <div id="patient-routine-list" class="patient-schedule-list">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Patient Interactive Game Play Screen -->
+      <div id="patient-game-view" style="display:none;">
+        <div class="game-play-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <button class="btn btn-secondary" onclick="GamesModule.exitToHome()">
+              ⬅️ <span data-i18n="back_home">Back to Home</span>
+            </button>
+            <div class="badge-large primary" style="font-size:1.1rem; font-weight:bold;">
+              <span data-i18n="difficulty_label">Difficulty Level</span>: Level <span id="game-active-level-num">1</span>
+            </div>
+          </div>
+          
+          <div id="game-play-area">
+            <!-- Dynamic game canvas/content rendered here -->
+          </div>
+        </div>
+      </div>
+      
+      <!-- Patient Companion Chat Screen -->
+      <div id="patient-chat-view" style="display:none;">
+        <div class="chat-container-card">
+          <div class="chat-header">
+            <div class="chat-header-left">
+              <div class="avatar-companion pulse-slow">🌺</div>
+              <div>
+                <h3 style="margin:0; font-size:1.3rem; color:#581C87;">Mitra - Your Personal Companion</h3>
+                <p style="margin:0; font-size:0.85rem; color:#7E22CE;">Speaking in your preferred language • Voice-First response</p>
+              </div>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="ChatbotCompanion.closeChat()">
+              ✕ Close
+            </button>
+          </div>
+          
+          <!-- Quick Context Prompts -->
+          <div class="quick-prompts-row">
+            <button class="btn-prompt-chip" onclick="ChatbotCompanion.handleUserInput('Sing one of my favorite songs!')">🎵 Sing a Song</button>
+            <button class="btn-prompt-chip" onclick="ChatbotCompanion.handleUserInput('Recite lines from a nostalgic poem')">📖 Recite a Poem</button>
+            <button class="btn-prompt-chip" onclick="ChatbotCompanion.handleUserInput('Tell me about Bihu and traditional festivals')">👒 Cultural Memories</button>
+            <button class="btn-prompt-chip" onclick="ChatbotCompanion.handleUserInput('What is my medicine schedule today?')">💊 Medication Check</button>
+          </div>
+          
+          <div id="chat-messages-container" class="chat-messages-area">
+            <!-- Messages rendered dynamically -->
+          </div>
+          
+          <div class="chat-input-bar">
+            <button class="mic-btn-large mic-btn" onclick="ChatbotCompanion.startVoiceQuery()" title="Speak to Mitra">
+              🎤
+            </button>
+            <input type="text" id="chat-text-input" class="form-input" placeholder="Type a message or tap the microphone to speak..." onkeypress="if(event.key === 'Enter') ChatbotCompanion.handleUserInput()" />
+            <button class="btn btn-primary" style="padding:14px 20px; border-radius:30px;" onclick="ChatbotCompanion.handleUserInput()">
+              Send
+            </button>
+          </div>
+        </div>
+      </div>
+      
+    </section>
+
+    <!-- ================= 2. CAREGIVER INTERFACE ================= -->
+    <section id="caregiver-role-container" style="display:none;">
+      <div id="caregiver-content">
+        <!-- Rendered by caregiver.js -->
+      </div>
+    </section>
+
+    <!-- ================= 3. DOCTOR INTERFACE ================= -->
+    <section id="doctor-role-container" style="display:none;">
+      <div id="doctor-content">
+        <!-- Rendered by doctor.js -->
+      </div>
+    </section>
+
+    <!-- ================= 4. GOVERNMENT INTERFACE ================= -->
+    <section id="govt-role-container" style="display:none;">
+      <div id="govt-content">
+        <!-- Rendered by govt.js -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= MODALS & POPUPS ================= -->
+
+  <!-- 1. 90-Second Non-Intrusive Reminder Modal -->
+  <div id="reminder-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div id="reminder-modal-content">
+        <!-- Rendered by reminders.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. AI Adaptive Difficulty Explainability Modal -->
+  <div id="adaptive-ai-modal" class="modal-overlay">
+    <div class="modal-card">
+      <button class="modal-close-btn" onclick="document.getElementById('adaptive-ai-modal').classList.remove('active')">✕</button>
+      <div id="adaptive-ai-modal-content">
+        <!-- Rendered by adaptive_ai.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Patient Onboarding Wizard Modal -->
+  <div id="onboarding-modal" class="modal-overlay">
+    <div class="modal-card">
+      <button class="modal-close-btn" onclick="AppState.closeOnboardingModal()">✕</button>
+      
+      <div style="border-bottom:2px solid #E2E8F0; padding-bottom:12px; margin-bottom:18px;">
+        <h2 style="margin:0; font-size:1.6rem; color:var(--text-primary);">Patient Onboarding & Setup</h2>
+        <p style="margin:4px 0 0 0; color:var(--text-secondary); font-size:0.95rem;">One-time configuration completed by caregiver / healthcare worker</p>
+      </div>
+      
+      <!-- Step 1: Personal & Clinical Info -->
+      <div id="onboard-step-1">
+        <h3 style="font-size:1.2rem; color:var(--primary-dark); margin-bottom:12px;">Step 1: Personal & Clinical Details</h3>
+        
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+          <div>
+            <label style="display:block; font-size:0.9rem; font-weight:600; margin-bottom:4px;">Patient Full Name *</label>
+            <input type="text" id="onboard-name" class="form-input" style="width:100%;" placeholder="e.g. Biren Gogoi" required />
+          </div>
+          <div>
+            <label style="display:block; font-size:0.9rem; font-weight:600; margin-bottom:4px;">Age</label>
+            <input type="number" id="onboard-age" class="form-input" style="width:100%;" placeholder="72" value="72" />
+          </div>
+        </div>
+        
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+          <div>
+            <label style="display:block; font-size:0.9rem; font-weight:600; margin-bottom:4px;">Gender</label>
+            <select id="onboard-gender" class="form-select" style="width:100%;">
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block; font-size:0.9rem; font-weight:600; margin-bottom:4px;">NER State</label>
+            <select id="onboard-state" class="form-select" style="width:100%;">
+              <option value="Assam">Assam</option>
+              <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+              <option value="Manipur">Manipur</option>
+              <option value="Meghalaya">Meghalaya</option>
+              <option value="Mizoram">Mizoram</option>
+              <option value="Nagaland">Nagaland</option>
+              <option value="Sikkim">Sikkim</option>
+              <option value="Tripura">Tripura</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+          <div>
+            <label style="display:block; font-size:0.9rem; font-weight:600; margin-bottom:4px;">District / Town</label>
+            <input type="text" id="onboard-district" class="form-input" style="width:100%;" placeholder="e.g. Kamrup Metro" />
+          </div>
+          <div>
+            <label style="display:block; font-size:0.9rem; font-weight:600; margin-bottom:4px;">Primary Language</label>
+            <select id="onboard-lang" class="form-select" style="width:100%;">
+              <option value="as">অসমীয়া (Assamese)</option>
+              <option value="bn">বাংলা (Bengali)</option>
+              <option value="mn">মৈতৈলোন্ (Manipuri)</option>
+              <option value="en">English</option>
+              <option value="hi">हिन्दी (Hindi)</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="margin-bottom:12px;">
+          <label style="display:block; font-size:0.9rem; font-weight:600; margin-bottom:4px;">
+            Diagnosed Condition / Stage (as specified by physician) *
+          </label>
+          <select id="onboard-stage" class="form-select" style="width:100%;">
+            <option value="Mild Cognitive Impairment">Mild Cognitive Impairment (MCI)</option>
+            <option value="Early Dementia">Early Stage Dementia</option>
+            <option value="Moderate Dementia">Moderate Stage Dementia</option>
+          </select>
+          <small style="color:var(--text-muted); display:block; margin-top:3px;">
+            ℹ️ Note: The system records physician diagnoses for difficulty calibration; the system does not diagnose.
+          </small>
+        </div>
+
+        <div style="margin-bottom:16px;">
+          <label style="display:block; font-size:0.9rem; font-weight:600; margin-bottom:4px;">Emergency Caregiver Contact</label>
+          <input type="text" id="onboard-contact" class="form-input" style="width:100%;" placeholder="+91 98640 12345" />
+        </div>
+
+        <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="AppState.goToOnboardStep(2)">
+          Next: Cultural Preferences & Routine ➔
+        </button>
+      </div>
+
+      <!-- Step 2: Cultural Preferences & Medication Routine -->
+      <div id="onboard-step-2" style="display:none;">
+        <h3 style="font-size:1.2rem; color:var(--primary-dark); margin-bottom:12px;">Step 2: Contextual Memories & Daily Routine</h3>
+        
+        <div style="margin-bottom:12px;">
+          <label style="display:block; font-size:0.9rem; font-weight:600; margin-bottom:4px;">Favorite Song(s) (comma separated)</label>
+          <input type="text" id="onboard-songs" class="form-input" style="width:100%;" placeholder="e.g. O Mur Apunar Dekh, Borgeet, Bihu Folk" value="O Mur Apunar Dekh (Bhupen Hazarika), Borgeet" />
+        </div>
+
+        <div style="margin-bottom:12px;">
+          <label style="display:block; font-size:0.9rem; font-weight:600; margin-bottom:4px;">Cultural Interests & Traditions</label>
+          <input type="text" id="onboard-interests" class="form-input" style="width:100%;" placeholder="e.g. Bihu dance, Majuli masks, Assam Tea, Hornbill" value="Bihu Festival, Majuli Mask Craft, Assam Tea Gardens" />
+        </div>
+
+        <div style="background:#F8FAFC; border:1px solid #E2E8F0; padding:14px; border-radius:12px; margin-bottom:16px;">
+          <h4 style="margin:0 0 8px 0; font-size:1rem; color:var(--text-primary);">Medication Schedule Entry</h4>
+          <div style="display:grid; grid-template-columns:1.2fr 0.8fr 1fr; gap:8px;">
+            <input type="text" id="onboard-med-name" class="form-input" placeholder="Med Name (e.g. Donepezil)" value="Donepezil" />
+            <input type="text" id="onboard-med-dose" class="form-input" placeholder="Dose (e.g. 5 mg)" value="5 mg" />
+            <input type="text" id="onboard-med-time" class="form-input" placeholder="Time (e.g. 08:00 AM)" value="08:00 AM" />
+          </div>
+        </div>
+
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn-secondary" style="flex:1;" onclick="AppState.goToOnboardStep(1)">
+            ⬅️ Back
+          </button>
+          <button class="btn btn-primary" style="flex:2;" onclick="AppState.goToOnboardStep(3)">
+            Next: Run Baseline Calibration Game ➔
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 3: Trial / Calibration Mini-Game -->
+      <div id="onboard-step-3" style="display:none;">
+        <div id="calibration-step-container">
+          <!-- Rendered by games.js startCalibrationTest() -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Voice Waveform Speaking Toast Indicator -->
+  <div id="voice-speaking-indicator" class="speaking-indicator-toast">
+    <div class="waveform-bars">
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+    </div>
+    <span>Voice Assistant Speaking...</span>
+  </div>
+
+  <!-- JavaScript Modules -->
+  <script src="/static/js/i18n.js"></script>
+  <script src="/static/js/voice.js"></script>
+  <script src="/static/js/db.js"></script>
+  <script src="/static/js/adaptive_ai.js"></script>
+  <script src="/static/js/reminders.js"></script>
+  <script src="/static/js/games.js"></script>
+  <script src="/static/js/chatbot.js"></script>
+  <script src="/static/js/caregiver.js"></script>
+  <script src="/static/js/doctor.js"></script>
+  <script src="/static/js/govt.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

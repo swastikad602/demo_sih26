@@ -1,0 +1,151 @@
+/* Doctor & Clinician Interface Styles */
+
+.doctor-header-card {
+  background: var(--surface-color);
+  border: 1px solid #E2E8F0;
+  border-radius: var(--border-radius-xl);
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 16px;
+}
+
+.doc-patient-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.doc-avatar {
+  font-size: 2.5rem;
+  width: 60px;
+  height: 60px;
+  background: #EFF6FF;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #BFDBFE;
+}
+
+.timeframe-toggle-group {
+  display: flex;
+  gap: 8px;
+  background: #F1F5F9;
+  padding: 6px;
+  border-radius: var(--border-radius-lg);
+}
+
+.clinical-disclaimer-card {
+  background: #EFF6FF;
+  border: 1.5px solid #BFDBFE;
+  color: #1E40AF;
+  border-radius: var(--border-radius-lg);
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  font-size: 0.95rem;
+}
+.clinical-disclaimer-card .warning-icon {
+  font-size: 1.6rem;
+}
+
+/* Domain Progress Bars */
+.domain-bars-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.domain-bar-item {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  padding: 14px 18px;
+  border-radius: var(--border-radius-lg);
+}
+
+.dom-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.dom-name {
+  font-size: 1.05rem;
+  color: var(--text-primary);
+}
+.dom-score {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.tag.green { background: var(--green-light); color: #065F46; }
+.tag.amber { background: var(--amber-light); color: #92400E; }
+
+.discrepancy-badges-summary {
+  display: flex;
+  gap: 8px;
+}
+
+.category-tag {
+  background: #F1F5F9;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.status-pill {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.status-pill.green { background: var(--green-light); color: #065F46; }
+.status-pill.amber { background: var(--amber-light); color: #92400E; }
+.status-pill.red { background: var(--red-light); color: #991B1B; }
+
+/* Doctor Notes Cards */
+.clinical-notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.doc-note-card {
+  background: #F8FAFC;
+  border: 1.5px solid #E2E8F0;
+  border-radius: var(--border-radius-lg);
+  padding: 16px;
+}
+
+.doc-note-header {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #E2E8F0;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+}
+
+.doc-recommendation-box {
+  background: #F0FDF4;
+  border-left: 4px solid var(--accent-green);
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-top: 8px;
+  font-size: 0.92rem;
+}
