@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0F766E">
+  <title>RECONNECT — Cognitive Wellness & Caregiver Coordination Platform</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+</head>
+<body>
+
+  <!-- ==========================================================================
+       TOP PRODUCTION APPLICATION BAR
+       ========================================================================== -->
+  <header class="top-app-bar">
+    <div class="brand-wrapper" onclick="app.navigateTo('screen-role-select')">
+      <div class="brand-logo-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2.04z"/>
+          <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2.04z"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <h1 id="app-nav-title">RECONNECT</h1>
+        <p id="app-nav-subtitle">Cognitive Wellness & Caregiver Coordination</p>
+      </div>
+    </div>
+
+    <div class="top-bar-actions">
+      <!-- Accessible Language Switcher -->
+      <button id="btn-global-lang" class="btn-lang-toggle" onclick="app.toggleLanguage()" title="Switch Language">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+        </svg>
+        <span id="label-lang-toggle">অসমীয়া (Assamese)</span>
+      </button>
+
+      <!-- Network Status Indicator -->
+      <div id="badge-network-status" class="connection-pill online" onclick="app.toggleConnection()" title="Click to test offline resilience">
+        <span class="dot"></span>
+        <span id="text-network-status">Connected</span>
+      </div>
+
+      <!-- User Profile / Role Switcher -->
+      <div class="user-avatar-badge" onclick="app.navigateTo('screen-role-select')" title="Switch Portal / Role">
+        <span id="top-avatar-icon">👤</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==========================================================================
+       MAIN RESPONSIVE VIEWPORT
+       ========================================================================== -->
+  <main class="main-viewport app-container">
+
+    <!-- ========================================================================
+         SCREEN 1: WELCOME & ROLE ACCESS GATEWAY
+         ======================================================================== -->
+    <section id="screen-role-select" class="screen active">
+      <div class="auth-gateway-container">
+        <div class="auth-header-card">
+          <h2>Welcome to RECONNECT</h2>
+          <p>Secure cognitive assistance, routine guidance, and clinical coordination across the Northeast Region.</p>
+        </div>
+
+        <div class="role-cards-container">
+          <!-- 1. Patient / Elder Portal -->
+          <div class="role-card" onclick="app.navigateTo('screen-login-elder')">
+            <div class="role-avatar-circle" style="background:#FEF3C7; color:#B45309;">
+              👵
+            </div>
+            <div class="role-info">
+              <h3>Patient Portal</h3>
+              <p>Mind exercises, daily medication timeline & family reminiscence</p>
+            </div>
+            <span class="role-arrow">➔</span>
+          </div>
+
+          <!-- 2. Caregiver Portal -->
+          <div class="role-card" onclick="app.navigateTo('screen-login-caregiver')">
+            <div class="role-avatar-circle" style="background:#CCFBF1; color:#0F766E;">
+              👩‍💼
+            </div>
+            <div class="role-info">
+              <h3>Caregiver Hub</h3>
+              <p>Monitor routine adherence, review alerts & safety triage</p>
+            </div>
+            <span class="role-arrow">➔</span>
+          </div>
+
+          <!-- 3. Doctor Portal -->
+          <div class="role-card" onclick="app.navigateTo('screen-login-doctor')">
+            <div class="role-avatar-circle" style="background:#E0F2FE; color:#0369A1;">
+              🩺
+            </div>
+            <div class="role-info">
+              <h3>Healthcare Provider Portal</h3>
+              <p>Longitudinal domain trends & clinical consultation records</p>
+            </div>
+            <span class="role-arrow">➔</span>
+          </div>
+
+          <!-- 4. Government / Public Health -->
+          <div class="role-card" onclick="app.navigateTo('screen-login-government')">
+            <div class="role-avatar-circle" style="background:#EDE9FE; color:#6D28D9;">
+              🏛️
+            </div>
+            <div class="role-info">
+              <h3>Public Health Informatics</h3>
+              <p>Population health metrics across all 8 Northeast States</p>
+            </div>
+            <span class="role-arrow">➔</span>
+          </div>
+        </div>
+
+        <div style="background:#F8FAFC; border:1px solid var(--border-subtle); padding:12px 16px; border-radius:var(--radius-md); font-size:12px; color:var(--text-secondary); text-align:center;">
+          🔒 All clinical consultations & personal data are encrypted. Built in compliance with National Digital Health standards.
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SCREEN 2: DEDICATED LOGIN — PATIENT / ELDER (MAYA BORAH)
+         ======================================================================== -->
+    <section id="screen-login-elder" class="screen">
+      <div class="login-card">
+        <div class="login-card-header">
+          <div class="login-icon-badge" style="background:#FEF3C7; border:2px solid #FDE68A;">
+            👵
+          </div>
+          <h2 class="login-card-title">Patient Sign In</h2>
+          <p class="login-card-sub">Please enter your 4-digit security PIN</p>
+        </div>
+
+        <!-- Verified Patient Profile Pill -->
+        <div class="patient-profile-pill">
+          <div class="patient-profile-pic">👵</div>
+          <div>
+            <strong style="font-size:15px; color:var(--text-primary);">Maya Borah (মায়া বৰা)</strong>
+            <div style="font-size:12px; color:var(--text-muted);">Age 72 • Guwahati, Assam</div>
+          </div>
+          <button class="btn-audio-speak" style="width:36px; height:36px; font-size:16px; margin-left:auto;" onclick="audioManager.speak('Please enter your 4 digit pin to open your day', appState.language)" title="Voice Guidance">
+            🔊
+          </button>
+        </div>
+
+        <!-- PIN Indicator Dots -->
+        <div class="pin-display-row">
+          <div id="pin-slot-1" class="pin-slot"></div>
+          <div id="pin-slot-2" class="pin-slot"></div>
+          <div id="pin-slot-3" class="pin-slot"></div>
+          <div id="pin-slot-4" class="pin-slot"></div>
+        </div>
+
+        <!-- Tactile Numeric Keypad -->
+        <div class="tactile-keypad-grid">
+          <button class="tactile-key" onclick="app.handlePinDigit('1')">1</button>
+          <button class="tactile-key" onclick="app.handlePinDigit('2')">2</button>
+          <button class="tactile-key" onclick="app.handlePinDigit('3')">3</button>
+          <button class="tactile-key" onclick="app.handlePinDigit('4')">4</button>
+          <button class="tactile-key" onclick="app.handlePinDigit('5')">5</button>
+          <button class="tactile-key" onclick="app.handlePinDigit('6')">6</button>
+          <button class="tactile-key" onclick="app.handlePinDigit('7')">7</button>
+          <button class="tactile-key" onclick="app.handlePinDigit('8')">8</button>
+          <button class="tactile-key" onclick="app.handlePinDigit('9')">9</button>
+          <button class="tactile-key action-key" onclick="app.handlePinClear()">Clear</button>
+          <button class="tactile-key" onclick="app.handlePinDigit('0')">0</button>
+          <button class="tactile-key action-key" onclick="app.handlePinBackspace()">⌫</button>
+        </div>
+
+        <div style="text-align:center; margin-top:16px;">
+          <button class="btn-secondary-link" onclick="app.navigateTo('screen-role-select')">
+            ← Switch Account
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SCREEN 3: DEDICATED LOGIN — CAREGIVER (ANITA BORAH)
+         ======================================================================== -->
+    <section id="screen-login-caregiver" class="screen">
+      <div class="login-card">
+        <div class="login-card-header">
+          <div class="login-icon-badge" style="background:#CCFBF1; border:2px solid #99F6E4;">
+            👩‍💼
+          </div>
+          <h2 class="login-card-title">Caregiver Sign In</h2>
+          <p class="login-card-sub">Access your family member's routine & safety feed</p>
+        </div>
+
+        <form onsubmit="event.preventDefault(); app.authenticateCaregiver();">
+          <div class="form-field">
+            <label class="form-label">Caregiver Email</label>
+            <input type="email" id="input-cg-email" class="form-input-text" value="anita.borah@reconnect.health" required>
+          </div>
+
+          <div class="form-field">
+            <label class="form-label">Password</label>
+            <input type="password" id="input-cg-pwd" class="form-input-text" value="••••••••" required>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; font-size:13px;">
+            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+              <input type="checkbox" checked style="accent-color:var(--brand-primary);">
+              <span>Remember this device</span>
+            </label>
+            <a href="#" style="color:var(--brand-primary); text-decoration:none; font-weight:600;" onclick="alert('Password reset link sent to your registered email.'); return false;">Forgot?</a>
+          </div>
+
+          <button type="submit" class="btn-submit-primary">
+            Sign In to Caregiver Hub
+          </button>
+        </form>
+
+        <div style="text-align:center; margin-top:20px;">
+          <button class="btn-secondary-link" onclick="app.navigateTo('screen-role-select')">
+            ← Return to Portal Selection
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SCREEN 4: DEDICATED LOGIN — DOCTOR (DR. B. BARUA, MD)
+         ======================================================================== -->
+    <section id="screen-login-doctor" class="screen">
+      <div class="login-card">
+        <div class="login-card-header">
+          <div class="login-icon-badge" style="background:#E0F2FE; border:2px solid #BAE6FD;">
+            🩺
+          </div>
+          <h2 class="login-card-title">Clinical Provider Portal</h2>
+          <p class="login-card-sub">Authorized Neurological & Geriatric Monitoring</p>
+        </div>
+
+        <form onsubmit="event.preventDefault(); app.authenticateDoctor();">
+          <div class="form-field">
+            <label class="form-label">Hospital Staff Email</label>
+            <input type="email" id="input-doc-email" class="form-input-text" value="dr.barua@gmch.gov.in" required>
+          </div>
+
+          <div class="form-field">
+            <label class="form-label">Medical Registration / NPI Number</label>
+            <input type="text" id="input-doc-license" class="form-input-text" value="NER-MED-8492" required>
+          </div>
+
+          <div class="form-field">
+            <label class="form-label">Clinical Facility</label>
+            <select class="form-select-box">
+              <option value="GMCH">Guwahati Medical College & Hospital (GMCH)</option>
+              <option value="NEIGRIHMS">NEIGRIHMS Shillong</option>
+              <option value="RIMS">RIMS Imphal</option>
+            </select>
+          </div>
+
+          <button type="submit" class="btn-submit-primary" style="background:var(--brand-secondary);">
+            Verify & Enter Clinical Workspace
+          </button>
+        </form>
+
+        <div style="text-align:center; margin-top:20px;">
+          <button class="btn-secondary-link" onclick="app.navigateTo('screen-role-select')">
+            ← Return to Portal Selection
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SCREEN 5: DEDICATED LOGIN — GOVERNMENT & PUBLIC HEALTH
+         ======================================================================== -->
+    <section id="screen-login-government" class="screen">
+      <div class="login-card">
+        <div class="login-card-header">
+          <div class="login-icon-badge" style="background:#EDE9FE; border:2px solid #DDD6FE;">
+            🏛️
+          </div>
+          <h2 class="login-card-title">NER Public Health Mission</h2>
+          <p class="login-card-sub">Aggregate Epidemiological & Engagement Analytics</p>
+        </div>
+
+        <form onsubmit="event.preventDefault(); app.authenticateGov();">
+          <div class="form-field">
+            <label class="form-label">Government Official Email</label>
+            <input type="email" class="form-input-text" value="health.director@doner.gov.in" required>
+          </div>
+
+          <div class="form-field">
+            <label class="form-label">Jurisdiction</label>
+            <select class="form-select-box">
+              <option value="ALL">All 8 Northeast States (Regional Overview)</option>
+              <option value="AS">Assam</option>
+              <option value="ML">Meghalaya</option>
+              <option value="MN">Manipur</option>
+              <option value="AR">Arunachal Pradesh</option>
+              <option value="NL">Nagaland</option>
+              <option value="TR">Tripura</option>
+              <option value="MZ">Mizoram</option>
+              <option value="SK">Sikkim</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label class="form-label">Two-Factor Passcode (2FA)</label>
+            <input type="text" class="form-input-text" value="849201" placeholder="6-digit token" required>
+          </div>
+
+          <button type="submit" class="btn-submit-primary" style="background:#7C3AED;">
+            Access Aggregate Analytics
+          </button>
+        </form>
+
+        <div style="text-align:center; margin-top:20px;">
+          <button class="btn-secondary-link" onclick="app.navigateTo('screen-role-select')">
+            ← Return to Portal Selection
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SCREEN 6: PATIENT HOME (MAYA BORAH)
+         ======================================================================== -->
+    <section id="screen-elder-home" class="screen">
+      <div class="elder-home-layout">
+        <!-- Personalized Calm Greeting -->
+        <div class="elder-welcome-header">
+          <div>
+            <h2 id="patient-greeting-name">Good morning, Maya</h2>
+            <p id="patient-greeting-sub">What would you like to do today?</p>
+          </div>
+          <button class="btn-audio-speak" onclick="audioManager.speak(document.getElementById('patient-greeting-name').innerText + '. ' + document.getElementById('patient-greeting-sub').innerText, appState.language)">
+            🔊
+          </button>
+        </div>
+
+        <!-- 5 Tactile Accessibility Hub Buttons -->
+        <div class="elder-hub-grid">
+          <!-- 0. TALK WITH MITRA (Voice Companion) -->
+          <div class="elder-hub-card card-talk" onclick="window.mitraCompanion.openCompanion()">
+            <div class="hub-card-icon">🌺</div>
+            <div class="hub-card-title" data-i18n="btn_companion">TALK WITH MITRA</div>
+            <div class="hub-card-sub" data-i18n="btn_companion_sub">Personal voice companion, songs & memories</div>
+          </div>
+
+          <!-- 1. Play Games -->
+          <div class="elder-hub-card card-play" onclick="app.navigateTo('screen-game-select')">
+            <div class="hub-card-icon">🧠</div>
+            <div class="hub-card-title" data-i18n="btn_play">PLAY</div>
+            <div class="hub-card-sub" data-i18n="btn_play_sub">Mind activities & memory</div>
+          </div>
+
+          <!-- 2. Daily Routine -->
+          <div class="elder-hub-card card-routine" onclick="app.navigateTo('screen-elder-routine')">
+            <div class="hub-card-icon">📋</div>
+            <div class="hub-card-title" data-i18n="btn_routine">MY ROUTINE</div>
+            <div class="hub-card-sub" data-i18n="btn_routine_sub">Today's medicines & schedule</div>
+          </div>
+
+          <!-- 3. Family Memories -->
+          <div class="elder-hub-card card-people" onclick="app.navigateTo('screen-elder-people')">
+            <div class="hub-card-icon">👨‍👩‍👧</div>
+            <div class="hub-card-title" data-i18n="btn_people">MY PEOPLE</div>
+            <div class="hub-card-sub" data-i18n="btn_people_sub">Family photos & voice memos</div>
+          </div>
+
+          <!-- 4. Assistance -->
+          <div class="elder-hub-card card-help" onclick="app.navigateTo('screen-elder-help')">
+            <div class="hub-card-icon">🆘</div>
+            <div class="hub-card-title" data-i18n="btn_help">HELP</div>
+            <div class="hub-card-sub" data-i18n="btn_help_sub">Contact daughter Anita</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SCREEN: PERSONAL VOICE COMPANION (MITRA)
+         ======================================================================== -->
+    <section id="screen-elder-companion" class="screen">
+      <div id="companion-ui-container" style="width:100%; display:flex; justify-content:center;">
+        <!-- Rendered dynamically by companion.js -->
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SCREEN 7: GAME CATALOG (COGNITIVE THERAPY ACTIVITIES)
+         ======================================================================== -->
+    <section id="screen-game-select" class="screen">
+      <div style="max-width: 600px; margin:0 auto; width:100%;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <div>
+            <h2 style="font-size:22px; font-weight:800;" data-i18n="game_title">Cognitive Activities</h2>
+            <p style="font-size:13px; color:var(--text-secondary);">Culturally familiar exercises adapted to your pace</p>
+          </div>
+          <button class="btn-secondary-link" onclick="app.navigateTo('screen-elder-home')">
+            ← Home
+          </button>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          <!-- Game 1: Memory -->
+          <div class="role-card" onclick="app.startCognitiveGame('memory')">
+            <div class="role-avatar-circle" style="background:#FEF3C7; color:#B45309;">🧠</div>
+            <div class="role-info">
+              <h3 data-i18n="game_memory_title">Visual Memory Recall</h3>
+              <p data-i18n="game_memory_desc">Match familiar cultural items and artifacts</p>
+            </div>
+            <span class="badge-level-pill" id="badge-lvl-memory">Level 1</span>
+          </div>
+
+          <!-- Game 2: Attention -->
+          <div class="role-card" onclick="app.startCognitiveGame('attention')">
+            <div class="role-avatar-circle" style="background:#CCFBF1; color:#0F766E;">👀</div>
+            <div class="role-info">
+              <h3 data-i18n="game_attention_title">Selective Attention & Focus</h3>
+              <p data-i18n="game_attention_desc">Identify specific items among visual distractors</p>
+            </div>
+            <span class="badge-level-pill" id="badge-lvl-attention">Level 1</span>
+          </div>
+
+          <!-- Game 3: Pattern -->
+          <div class="role-card" onclick="app.startCognitiveGame('pattern')">
+            <div class="role-avatar-circle" style="background:#E0F2FE; color:#0369A1;">🔷</div>
+            <div class="role-info">
+              <h3 data-i18n="game_pattern_title">Pattern & Sequence Logic</h3>
+              <p data-i18n="game_pattern_desc">Complete natural sequences and daily workflows</p>
+            </div>
+            <span class="badge-level-pill" id="badge-lvl-pattern">Level 1</span>
+          </div>
+
+          <!-- Game 4: Executive -->
+          <div class="role-card" onclick="app.startCognitiveGame('executive')">
+            <div class="role-avatar-circle" style="background:#EDE9FE; color:#6D28D9;">📋</div>
+            <div class="role-info">
+              <h3 data-i18n="game_routine_title">Daily Routine Planning</h3>
+              <p data-i18n="game_routine_desc">Arrange morning and mealtime steps in logical order</p>
+            </div>
+            <span class="badge-level-pill" id="badge-lvl-executive">Level 1</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SCREEN 8: ACTIVE GAME PLAYING
+         ======================================================================== -->
+    <section id="screen-game-active" class="screen">
+      <div class="game-interface-wrapper">
+        <div id="game-active-area">
+          <!-- Populated by game classes -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SCREEN 9: GAME RESULTS & CLINICAL ADAPTATION EXPLANATION
+         ======================================================================== -->
+    <section id="screen-game-result" class="screen">
+      <div class="results-card-container">
+        <div style="font-size:48px; margin-bottom:10px;">🌟</div>
+        <h2 id="result-headline" style="font-size:24px; font-weight:800; color:var(--brand-primary-dark);">Activity Completed</h2>
+        <p id="result-subline" style="font-size:14px; color:var(--text-secondary);">Your cognitive engagement record has been updated.</p>
+
+        <!-- Metrics Grid -->
+        <div class="results-metrics-grid">
+          <div class="metric-box">
+            <div id="result-score-val" class="metric-val">88</div>
+            <div class="metric-label">Activity Score</div>
+          </div>
+          <div class="metric-box">
+            <div id="result-acc-val" class="metric-val">86%</div>
+            <div class="metric-label">Accuracy</div>
+          </div>
+          <div class="metric-box">
+            <div id="result-time-val" class="metric-val">15s</div>
+            <div class="metric-label">Avg Response</div>
+          </div>
+        </div>
+
+        <!-- Explainable AI Clinical Adaptation Card -->
+        <div class="ai-rationale-box">
+          <div class="ai-rationale-header">
+            <span>🤖</span>
+            <span>Adaptive Difficulty Recommendation</span>
+          </div>
+          <p id="ai-rule-title" style="font-weight:700; color:var(--text-primary); margin-bottom:4px;">Rule 1: High Accuracy & Fast Response</p>
+          <p id="ai-rule-details" class="ai-rationale-text">
+            Performance remains consistent and fluent. Difficulty level adjusted from Level 1 to Level 2.
+          </p>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <button class="btn-submit-primary" onclick="app.navigateTo('screen-game-select')">
+            Play Another Activity
+          </button>
+          <button class="btn-secondary-link" style="justify-content:center;" onclick="app.navigateTo('screen-elder-home')">
+            Return to Home Dashboard
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SCREEN 10: PATIENT ROUTINE & MEDICATIONS
+         ======================================================================== -->
+    <section id="screen-elder-routine" class="screen">
+      <div style="max-width: 600px; margin:0 auto; width:100%;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <div>
+            <h2 style="font-size:22px; font-weight:800;" data-i18n="routine_header">Today's Schedule</h2>
+            <p style="font-size:13px; color:var(--text-secondary);">Prescribed medications and meal reminders</p>
+          </div>
+          <button class="btn-secondary-link" onclick="app.navigateTo('screen-elder-home')">
+            ← Home
+          </button>
+        </div>
+
+        <!-- Simulation Medication Prompt Button -->
+        <div style="background:var(--brand-primary-surface); border:1px solid #CCFBF1; padding:14px 16px; border-radius:var(--radius-lg); margin-bottom:18px; display:flex; align-items:center; justify-content:space-between;">
+          <div>
+            <strong style="font-size:13.5px; color:var(--brand-primary-dark); display:block;">Medication Prompt Simulator</strong>
+            <span style="font-size:12px; color:var(--text-secondary);">Test the 90-second non-intrusive reminder window</span>
+          </div>
+          <button class="btn-lang-toggle" style="background:var(--brand-primary); color:#FFF;" onclick="app.triggerMedicationReminder()">
+            🔔 Trigger Reminder
+          </button>
+        </div>
+
+        <div id="patient-routine-timeline-list" style="display:flex; flex-direction:column; gap:12px;">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SCREEN 11: PATIENT FAMILY MEMORIES (REMINISCENCE)
+         ======================================================================== -->
+    <section id="screen-elder-people" class="screen">
+      <div style="max-width: 600px; margin:0 auto; width:100%;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <div>
+            <h2 style="font-size:22px; font-weight:800;" data-i18n="people_header">My Loved Ones</h2>
+            <p style="font-size:13px; color:var(--text-secondary);">Family members and personal voice recordings</p>
+          </div>
+          <button class="btn-secondary-link" onclick="app.navigateTo('screen-elder-home')">
+            ← Home
+          </button>
+        </div>
+
+        <div id="patient-family-cards-list" style="display:flex; flex-direction:column; gap:14px;">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SCREEN 12: PATIENT HELP & CAREGIVER ALERT
+         ======================================================================== -->
+    <section id="screen-elder-help" class="screen">
+      <div style="max-width: 500px; margin:auto; width:100%; text-align:center; padding:20px 0;">
+        <div style="width:88px; height:88px; border-radius:var(--radius-full); background:#FFE4E6; border:3px solid #FDA4AF; display:flex; align-items:center; justify-content:center; font-size:42px; margin:0 auto 16px;">
+          🆘
+        </div>
+        <h2 style="font-size:24px; font-weight:800; color:#9F1239; margin-bottom:8px;" data-i18n="help_title">Request Assistance</h2>
+        <p style="font-size:15px; color:var(--text-secondary); line-height:1.5; margin-bottom:24px;">
+          Press the button below to notify Anita on her phone. Please stay calm, your family is always here for you.
+        </p>
+
+        <button class="btn-confirm-intake" style="width:100%; height:60px; font-size:18px; background:#E11D48; border-radius:var(--radius-xl);" onclick="app.sendPatientEmergencyAlert()">
+          🔔 Notify Anita Now
+        </button>
+
+        <div id="patient-help-sent-box" style="display:none; background:#F0FDF4; border:1.5px solid #86EFAC; padding:16px; border-radius:var(--radius-lg); margin-top:20px; color:#166534; font-weight:700;">
+          ✓ Anita has been notified on her smartphone. Someone will assist you shortly.
+        </div>
+
+        <div style="margin-top:24px;">
+          <button class="btn-secondary-link" onclick="app.navigateTo('screen-elder-home')">
+            ← Return to Home
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SCREEN 13: CAREGIVER DASHBOARD (ANITA BORAH)
+         ======================================================================== -->
+    <section id="screen-caregiver-home" class="screen">
+      <div style="max-width: 900px; margin:0 auto; width:100%;">
+        <!-- Caregiver Patient Summary Card -->
+        <div class="content-section-card" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
+          <div style="display:flex; align-items:center; gap:14px;">
+            <div style="width:52px; height:52px; border-radius:var(--radius-full); background:var(--brand-primary-surface); display:flex; align-items:center; justify-content:center; font-size:28px;">
+              👵
+            </div>
+            <div>
+              <h3 style="font-size:18px; font-weight:800;">Maya Borah (Mother)</h3>
+              <p style="font-size:13px; color:var(--text-muted);">Age 72 • Assam • Monitored since Aug 2026</p>
+            </div>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <span class="connection-pill online"><span class="dot"></span> Maya's Device Active</span>
+          </div>
+        </div>
+
+        <!-- KPI Metrics Grid -->
+        <div class="dashboard-grid">
+          <div class="stat-widget-card">
+            <div class="widget-label">Today's Completed Sessions</div>
+            <div class="widget-value" id="cg-kpi-sessions">3 / 4</div>
+            <div class="widget-trend" style="color:var(--brand-success);">✓ Steady engagement</div>
+          </div>
+          <div class="stat-widget-card">
+            <div class="widget-label">Current Cognitive Level</div>
+            <div class="widget-value" id="cg-kpi-level">Level 2</div>
+            <div class="widget-trend" style="color:var(--brand-primary);">Balanced challenge</div>
+          </div>
+          <div class="stat-widget-card">
+            <div class="widget-label">Medication Adherence</div>
+            <div class="widget-value" id="cg-kpi-reminders">4 / 5</div>
+            <div class="widget-trend" style="color:var(--brand-success);">80% on-time acknowledgement</div>
+          </div>
+          <div class="stat-widget-card">
+            <div class="widget-label">Safety Alerts</div>
+            <div class="widget-value" id="cg-kpi-alerts" style="color:var(--brand-warning);">1</div>
+            <div class="widget-trend" style="color:var(--brand-warning);">Needs review</div>
+          </div>
+        </div>
+
+        <!-- Active Safety & Activity Alerts -->
+        <div class="content-section-card">
+          <div class="section-card-title">
+            <span>Safety Alerts & Notifications</span>
+            <span class="badge-level-pill" id="cg-active-alert-badge">1 Pending</span>
+          </div>
+          <div id="caregiver-alerts-feed">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- Routine Timeline & Add Modal Triggers -->
+        <div class="content-section-card">
+          <div class="section-card-title">
+            <span>Daily Schedule & Medication Regimen</span>
+            <div style="display:flex; gap:8px;">
+              <button class="btn-lang-toggle" onclick="app.openCaregiverModal('modal-add-reminder')">
+                + Add Medication
+              </button>
+              <button class="btn-lang-toggle" onclick="app.openCaregiverModal('modal-add-memory')">
+                + Add Photo
+              </button>
+            </div>
+          </div>
+          <div id="caregiver-schedule-timeline">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SCREEN 14: DOCTOR CLINICAL WORKSPACE (DR. B. BARUA, MD)
+         ======================================================================== -->
+    <section id="screen-doctor-home" class="screen">
+      <div style="max-width: 960px; margin:0 auto; width:100%;">
+        <div class="content-section-card" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+          <div>
+            <h2 style="font-size:20px; font-weight:800;">Dr. B. Barua, MD</h2>
+            <p style="font-size:13px; color:var(--text-muted);">Department of Geriatrics, Guwahati Medical College & Hospital (GMCH)</p>
+          </div>
+          <div style="font-size:12.5px; background:var(--brand-secondary-surface); border:1px solid #BAE6FD; padding:6px 12px; border-radius:var(--radius-full); color:var(--brand-secondary); font-weight:600;">
+            Patient: Maya Borah (ID: NER-P-7201)
+          </div>
+        </div>
+
+        <!-- Cognitive Domain Summary Table -->
+        <div class="content-section-card">
+          <div class="section-card-title">Cognitive Domain Performance Analysis</div>
+          <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:13px; text-align:left;">
+              <thead>
+                <tr style="border-bottom:1.5px solid var(--border-subtle); color:var(--text-muted);">
+                  <th style="padding:10px 6px;">Domain Area</th>
+                  <th style="padding:10px 6px;">Sessions</th>
+                  <th style="padding:10px 6px;">Accuracy</th>
+                  <th style="padding:10px 6px;">Reaction Latency</th>
+                  <th style="padding:10px 6px;">Longitudinal Trend</th>
+                </tr>
+              </thead>
+              <tbody id="doctor-domain-table">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Clinical Consultation Records -->
+        <div class="content-section-card">
+          <div class="section-card-title">Physician Consultation Notes</div>
+          <div id="doctor-consultation-notes-list" style="display:flex; flex-direction:column; gap:12px; margin-bottom:16px;">
+            <!-- Populated dynamically -->
+          </div>
+
+          <div style="background:var(--bg-subtle); padding:16px; border-radius:var(--radius-lg); border:1px solid var(--border-subtle);">
+            <label class="form-label">Record New Clinical Assessment Note:</label>
+            <textarea id="doctor-new-note-input" class="form-input-text" style="height:80px; padding:10px; resize:none;" placeholder="Enter clinical assessment..."></textarea>
+            <button class="btn-submit-primary" style="height:44px; margin-top:10px; width:auto; padding:0 24px; background:var(--brand-secondary);" onclick="app.submitDoctorClinicalNote()">
+              Save Assessment Note
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SCREEN 15: PUBLIC HEALTH INFORMATICS (NER 8 STATES)
+         ======================================================================== -->
+    <section id="screen-government-home" class="screen">
+      <div style="max-width: 960px; margin:0 auto; width:100%;">
+        <div class="content-section-card" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
+          <div>
+            <h2 style="font-size:20px; font-weight:800;">Northeast Region Cognitive Wellness Surveillance</h2>
+            <p style="font-size:13px; color:var(--text-muted);">Ministry of Development of North Eastern Region (DoNER) & Health Directorate</p>
+          </div>
+          <button class="btn-lang-toggle" style="background:#EDE9FE; border-color:#DDD6FE; color:#6D28D9;" onclick="app.exportNERDatasetCSV()">
+            📥 Export De-identified CSV
+          </button>
+        </div>
+
+        <!-- Regional Metrics Overview -->
+        <div class="dashboard-grid">
+          <div class="stat-widget-card">
+            <div class="widget-label">Enrolled Participants</div>
+            <div class="widget-value">455</div>
+            <div class="widget-trend" style="color:var(--brand-success);">Across 8 NER States</div>
+          </div>
+          <div class="stat-widget-card">
+            <div class="widget-label">Total Cognitive Sessions</div>
+            <div class="widget-value">3,420</div>
+            <div class="widget-trend" style="color:var(--brand-primary);">Completed CST activities</div>
+          </div>
+          <div class="stat-widget-card">
+            <div class="widget-label">Adherence Stability Rate</div>
+            <div class="widget-value">84.5%</div>
+            <div class="widget-trend" style="color:var(--brand-success);">Routine compliance</div>
+          </div>
+          <div class="stat-widget-card">
+            <div class="widget-label">Multilingual Adoption</div>
+            <div class="widget-value">Assamese 54%</div>
+            <div class="widget-trend" style="color:#7C3AED;">English 32% • Others 14%</div>
+          </div>
+        </div>
+
+        <!-- 8 NER States Participation Cards -->
+        <div class="content-section-card">
+          <div class="section-card-title">State-Level Cognitive Care Distribution</div>
+          <div id="ner-states-participation-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px;">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- District Level Distribution -->
+        <div class="content-section-card">
+          <div class="section-card-title">District Surveillance Table</div>
+          <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:12.5px; text-align:left;">
+              <thead>
+                <tr style="border-bottom:1.5px solid var(--border-subtle); color:var(--text-muted);">
+                  <th style="padding:8px 6px;">District</th>
+                  <th style="padding:8px 6px;">State</th>
+                  <th style="padding:8px 6px;">Active Patients</th>
+                  <th style="padding:8px 6px;">Completed Sessions</th>
+                  <th style="padding:8px 6px;">Adherence Rate</th>
+                </tr>
+              </thead>
+              <tbody id="ner-district-table-body">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==========================================================================
+       90-SECOND MEDICATION REMINDER WORKFLOW MODAL
+       ========================================================================== -->
+  <div id="modal-medication-reminder" class="modal-overlay" style="display:none;">
+    <div class="modal-dialog reminder-dialog">
+      <div style="font-size:12px; font-weight:800; color:var(--brand-primary); text-transform:uppercase; letter-spacing:0.5px;">
+        Scheduled Medication
+      </div>
+      <h3 id="med-reminder-title" style="font-size:22px; font-weight:800; margin:6px 0 14px; color:var(--text-primary);">
+        Blood Pressure Medicine (Amlodipine 5mg)
+      </h3>
+
+      <!-- Medicine Box Representation -->
+      <div class="reminder-medicine-box">
+        <div class="med-icon-badge">💊</div>
+        <div class="med-info">
+          <h4>Amlodipine Besylate (5mg)</h4>
+          <p>Take 1 tablet with warm water after morning tea</p>
+        </div>
+      </div>
+
+      <!-- 90-Second Calm Progress Bar -->
+      <div class="reminder-progress-track">
+        <div id="med-reminder-progress-fill" class="reminder-progress-fill" style="width: 100%;"></div>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-size:11.5px; color:var(--text-muted); font-weight:600;">
+        <span>Gentle processing window</span>
+        <span id="med-reminder-seconds-label">90s</span>
+      </div>
+
+      <!-- 3 Clear Patient Response Options -->
+      <div class="reminder-btn-stack">
+        <button class="btn-confirm-intake" onclick="reminderEngine.respondDone()">
+          ✓ I Took It
+        </button>
+        <button class="btn-delay-intake" onclick="reminderEngine.respondLater()">
+          ⏱️ Remind Me in 15 Minutes
+        </button>
+        <button class="btn-ask-help" onclick="reminderEngine.respondNeedHelp()">
+          🆘 Ask Anita for Help
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       CAREGIVER MODALS (ADD REMINDER & ADD MEMORY)
+       ========================================================================== -->
+  <!-- Modal: Add Reminder -->
+  <div id="modal-add-reminder" class="modal-overlay" style="display:none;">
+    <div class="modal-dialog">
+      <h3 style="font-size:18px; font-weight:800; margin-bottom:16px;">Schedule New Medication</h3>
+      <form onsubmit="event.preventDefault(); app.saveNewMedication();">
+        <div class="form-field">
+          <label class="form-label">Medication / Task Name</label>
+          <input type="text" id="new-rem-title" class="form-input-text" placeholder="e.g. Donepezil 5mg (Evening)" required>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Category</label>
+          <select id="new-rem-category" class="form-select-box">
+            <option value="Medicine">Medicine (Prescribed)</option>
+            <option value="Food">Meal & Hydration</option>
+            <option value="Activity">Physical / Cognitive Activity</option>
+            <option value="Family">Family Video Call</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Time</label>
+          <input type="text" id="new-rem-time" class="form-input-text" value="08:00 PM" required>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:20px;">
+          <button type="button" class="btn-delay-intake" style="flex:1;" onclick="app.closeModal('modal-add-reminder')">Cancel</button>
+          <button type="submit" class="btn-submit-primary" style="flex:2;">Save Schedule</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Add Memory -->
+  <div id="modal-add-memory" class="modal-overlay" style="display:none;">
+    <div class="modal-dialog">
+      <h3 style="font-size:18px; font-weight:800; margin-bottom:16px;">Add Family Photo Card</h3>
+      <form onsubmit="event.preventDefault(); app.saveNewMemoryCard();">
+        <div class="form-field">
+          <label class="form-label">Family Member Name</label>
+          <input type="text" id="new-mem-name" class="form-input-text" placeholder="e.g. Rahul" required>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Relationship</label>
+          <input type="text" id="new-mem-rel" class="form-input-text" placeholder="e.g. Son (পুত্ৰ)" required>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Voice Memo Narration</label>
+          <input type="text" id="new-mem-voice" class="form-input-text" placeholder="e.g. This is your son Rahul." required>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:20px;">
+          <button type="button" class="btn-delay-intake" style="flex:1;" onclick="app.closeModal('modal-add-memory')">Cancel</button>
+          <button type="submit" class="btn-submit-primary" style="flex:2;">Add to Album</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MOBILE BOTTOM TAB BAR (Appears on Mobile & Tablet Viewports)
+       ========================================================================== -->
+  <nav id="app-bottom-nav" class="mobile-tab-bar">
+    <button class="tab-nav-item active" onclick="app.navigateTo('screen-elder-home')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>Patient</span>
+    </button>
+    <button class="tab-nav-item" onclick="app.navigateTo('screen-caregiver-home')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span>Caregiver</span>
+    </button>
+    <button class="tab-nav-item" onclick="app.navigateTo('screen-doctor-home')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      <span>Doctor</span>
+    </button>
+    <button class="tab-nav-item" onclick="app.navigateTo('screen-government-home')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+      <span>Health Data</span>
+    </button>
+  </nav>
+
+  <!-- Core Scripts -->
+  <script src="js/translations.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/seed-data.js"></script>
+  <script src="js/firebase-store.js"></script>
+  <script src="js/adaptive-engine.js"></script>
+  <script src="js/reminder-engine.js"></script>
+  <script src="js/games/memory.js"></script>
+  <script src="js/games/attention.js"></script>
+  <script src="js/games/pattern.js"></script>
+  <script src="js/games/executive.js"></script>
+  <script src="js/companion.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
