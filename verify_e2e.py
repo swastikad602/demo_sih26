@@ -8,15 +8,17 @@ from pathlib import Path
 def test_e2e():
     print("[*] Starting backend server for E2E verification...")
     proc = subprocess.Popen([sys.executable, "run_app.py"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    time.sleep(3) # Wait for server to bind to port 8000
+    time.sleep(5) # Wait for server to bind to port 8000
+
     
     try:
         # 1. Test Static Index serving
         req = urllib.request.urlopen("http://127.0.0.1:8000/")
         assert req.status == 200, f"Expected 200, got {req.status}"
         html_content = req.read().decode('utf-8')
-        assert "NER Cognitive & Memory Care" in html_content
-        print("[OK] Static index.html served successfully.")
+        assert "RECONNECT" in html_content
+        print("[OK] Static index.html served successfully (RECONNECT original UI).")
+
 
         # 2. Test API Health
         req_health = urllib.request.urlopen("http://127.0.0.1:8000/api/health")
@@ -55,14 +57,38 @@ def test_e2e():
         assert len(govt_data["states_breakdown"]) == 8
         print("[OK] Government 8 NER states metrics endpoint validated.")
 
-        # 6. Test Static Assets (CSS and JS)
-        req_css = urllib.request.urlopen("http://127.0.0.1:8000/static/css/patient.css")
+        # 6. Test Static Assets (Original UI CSS and JS)
+        req_css = urllib.request.urlopen("http://127.0.0.1:8000/css/style.css")
         assert req_css.status == 200
-        req_js = urllib.request.urlopen("http://127.0.0.1:8000/static/js/games.js")
+        req_js = urllib.request.urlopen("http://127.0.0.1:8000/js/app.js")
         assert req_js.status == 200
-        print("[OK] Static CSS & JS module assets served correctly.")
+        print("[OK] Original UI CSS & JS assets (css/style.css, js/app.js) served correctly.")
+
+
+        # 7. Test AI Chatbot Endpoint (POST /api/chat)
+        chat_payload = json.dumps({
+            "patient_id": "pat-ner-001",
+            "message": "Sing a song for me please",
+            "language": "as",
+            "conversation_history": [
+                {"role": "user", "content": "Hello Mitra"}
+            ]
+        }).encode("utf-8")
+        req_chat = urllib.request.Request(
+            "http://127.0.0.1:8000/api/chat",
+            data=chat_payload,
+            headers={"Content-Type": "application/json"}
+        )
+        chat_resp = urllib.request.urlopen(req_chat)
+        assert chat_resp.status == 200
+        chat_data = json.loads(chat_resp.read().decode("utf-8"))
+        assert "reply" in chat_data
+        assert chat_data["language"] == "as"
+        assert len(chat_data["suggested_chips"]) > 0
+        print(f"[OK] AI Chatbot companion endpoint validated successfully (source: {chat_data.get('source')}).")
 
         print("\n=== ALL END-TO-END VERIFICATION CHECKS PASSED SUCCESSFULLY! ===")
+
 
     finally:
         proc.terminate()

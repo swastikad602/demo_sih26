@@ -1,0 +1,18 @@
+{
+  "name": "ner-dementia-platform",
+  "version": "1.0.0",
+  "description": "AI-Based Cognitive Gaming & Memory Assistance Platform (SIH26003)",
+  "scripts": {
+    "dev": "python run_app.py",
+    "start": "python run_app.py",
+    "test": "python verify_e2e.py"
+  },
+  "keywords": [
+    "ai",
+    "dementia-care",
+    "fastapi",
+    "cognitive-health"
+  ],
+  "author": "SIH26003 Team",
+  "license": "ISC"
+}

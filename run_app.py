@@ -26,14 +26,23 @@ def main():
         # Apply non-destructive schema additions for existing installations.
         init_db()
         
+    from dotenv import load_dotenv
+    load_dotenv(dotenv_path=Path(__file__).resolve().parent / ".env")
+    
+    host = os.getenv("APP_HOST", "0.0.0.0")
+    port = int(os.getenv("APP_PORT", 8000))
+
     print("\n[+] Starting FastAPI Web Server & REST API...")
-    print("[*] Local Web App URL: http://127.0.0.1:8000")
-    print("[*] API Docs (Swagger): http://127.0.0.1:8000/docs")
+    print(f"[*] Primary Web App URL:      http://localhost:{port}")
+    print(f"[*] Loopback Web App URL:     http://127.0.0.1:{port}")
+    print(f"[*] API Docs (Swagger):       http://localhost:{port}/docs")
     print("[*] 4 Roles Supported: Patient, Caregiver, Doctor, Government")
     print("[*] 8 NER States Supported: AS, AR, MN, ML, MZ, NL, SK, TR")
     print("[*] Offline-First PWA with IndexedDB & Background Cloud Sync\n")
     
-    uvicorn.run("app:app", host="127.0.0.1", port=8000, reload=False, app_dir=str(backend_dir))
+    uvicorn.run("app:app", host=host, port=port, reload=False, app_dir=str(backend_dir))
+
+
 
 if __name__ == "__main__":
     main()

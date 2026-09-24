@@ -92,3 +92,21 @@ class BatchSyncPayload(BaseModel):
     doctor_notes: Optional[List[Dict[str, Any]]] = []
     scheduled_reminders: Optional[List[Dict[str, Any]]] = []
     deleted_scheduled_reminder_ids: Optional[List[str]] = []
+
+class ChatMessageItem(BaseModel):
+    role: str = Field(..., description="'user', 'assistant', or 'system'")
+    content: str
+    timestamp: Optional[str] = None
+
+class ChatRequestSchema(BaseModel):
+    patient_id: str
+    message: str
+    language: Optional[str] = "en"
+    conversation_history: Optional[List[ChatMessageItem]] = []
+
+class ChatResponseSchema(BaseModel):
+    reply: str
+    language: str
+    timestamp: str
+    suggested_chips: Optional[List[str]] = []
+    source: str = Field(default="ai_model", description="'ai_model' or 'offline_fallback'")

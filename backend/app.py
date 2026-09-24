@@ -1,9 +1,10 @@
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 import json
 import uuid
+import edge_tts
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 from pathlib import Path
@@ -12,8 +13,10 @@ from database import get_db_connection, init_db
 from schemas import (
     PatientCreateSchema, GameSessionCreateSchema, ReminderLogCreateSchema,
     AlertCreateSchema, DoctorNoteCreateSchema, BatchSyncPayload, FamilyMemberSchema,
-    ScheduledReminderSchema
+    ScheduledReminderSchema, ChatRequestSchema, ChatResponseSchema
 )
+from ai_service import generate_ai_chat_response, sanitize_patient_context
+
 
 app = FastAPI(
     title="AI-Based Cognitive Gaming & Memory Assistance Platform (SIH26003)",
@@ -726,13 +729,127 @@ def batch_sync(payload: BatchSyncPayload):
         "synced_at": datetime.now().isoformat()
     }
 
+# --- AI Chatbot Companion Endpoint ---
+
+@app.post("/api/chat", response_model=ChatResponseSchema)
+async def chat_with_companion(payload: ChatRequestSchema):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM patients WHERE id = ?", (payload.patient_id,))
+    row = cursor.fetchone()
+    patient_data = row_to_dict(row) if row else {"name": "Maya", "state": "Assam", "age": 72}
+
+    # Fetch family members for real contextual awareness
+    cursor.execute("SELECT * FROM family_members WHERE patient_id = ?", (payload.patient_id,))
+    fam_rows = cursor.fetchall()
+    patient_data["family_members"] = [dict(f) for f in fam_rows]
+    conn.close()
+
+    sanitized = sanitize_patient_context(patient_data)
+    first_name = sanitized["first_name"]
+    target_lang = payload.language or patient_data.get("language", "as")
+    now_str = datetime.now().strftime("%I:%M %p")
+
+    try:
+        reply_text = await generate_ai_chat_response(
+            patient_raw=patient_data,
+            user_message=payload.message,
+            history=[msg.model_dump() if hasattr(msg, "model_dump") else dict(msg) for msg in (payload.conversation_history or [])],
+            lang=target_lang
+        )
+        source = "ai_model"
+    except Exception as exc:
+        print(f"[WARN] AI chat generation error: {exc}")
+        if target_lang == "as":
+            reply_text = f"মায়া, মোৰ সেৱাত ক্ষন্তেক পলম হৈছে। আপুনি অনুগ্ৰহ কৰি আকৌ এবাৰ কওক।"
+        elif target_lang == "bn":
+            reply_text = f"মায়া, সংযোগে একটু বিলম্ব হয়েছে। আপনি অনুগ্রহ করে আর একবার বলুন।"
+        elif target_lang == "hi":
+            reply_text = f"माया, संपर्क में थोड़ा विलंब हुआ। क्या आप कृपया फिर से कहेंगी?"
+        else:
+            reply_text = f"I am right here with you, {first_name}. I had a brief pause in processing — could you please ask me that once more?"
+        source = "ai_error"
+
+    if target_lang == "as":
+        suggested_chips = [
+            "এটা গীত গোৱা 🎵",
+            "এটা কবিতা কোৱা 📖",
+            "বিহুৰ স্মৃতি 🌺",
+            "আজিৰ ৰুটিন 💊"
+        ]
+    elif target_lang == "bn":
+        suggested_chips = [
+            "একটি প্রিয় গান গাও 🎵",
+            "একটি মিষ্টি কবিতা শোনাও 📖",
+            "উৎসবের স্মৃতি 🌺",
+            "আজকের রুটিন 💊"
+        ]
+    elif target_lang == "hi":
+        suggested_chips = [
+            "एक प्यारा गीत गाओ 🎵",
+            "एक कविता सुनाओ 📖",
+            "त्यौहार की बातें 🌺",
+            "आज की दिनचर्या 💊"
+        ]
+    else:
+        suggested_chips = [
+            "Sing a song for me 🎵",
+            "Recite a poem 📖",
+            "Cultural memories 🌺",
+            "Check my routine 💊"
+        ]
+
+    return ChatResponseSchema(
+        reply=reply_text,
+        language=target_lang,
+        timestamp=now_str,
+        suggested_chips=suggested_chips,
+        source=source
+    )
+
+# --- Neural Text-To-Speech (TTS) Endpoint ---
+
+NEURAL_VOICE_MAP = {
+    "bn": "bn-IN-TanishaaNeural",  # Authentic West Bengal / Kolkata Indian Bengali Natural Voice
+    "as": "bn-IN-TanishaaNeural",  # Natural Eastern Indic Phonetic Voice
+    "hi": "hi-IN-SwaraNeural",     # High-fidelity Hindi Natural Voice
+    "en": "en-IN-NeerjaNeural",    # Clear Indian English Natural Voice
+    "mn": "bn-IN-TanishaaNeural"
+}
+
+@app.get("/api/tts")
+async def generate_speech_audio(text: str = Query(..., description="Text to synthesize"), lang: str = Query("en")):
+    voice = NEURAL_VOICE_MAP.get(lang, "en-IN-NeerjaNeural")
+    try:
+        clean_text = text.replace("*", "").replace("#", "").replace("`", "").strip()
+        communicate = edge_tts.Communicate(clean_text, voice, rate="-3%", pitch="+1Hz")
+        audio_data = bytearray()
+        async for chunk in communicate.stream():
+            if chunk["type"] == "audio":
+                audio_data.extend(chunk["data"])
+        return Response(content=bytes(audio_data), media_type="audio/mpeg")
+    except Exception as exc:
+        print(f"[WARN] edge-tts error: {exc}")
+        raise HTTPException(status_code=500, detail=str(exc))
+
 # --- Static Frontend Serving ---
+ROOT_DIR = Path(__file__).resolve().parent.parent
+
+if (ROOT_DIR / "css").exists():
+    app.mount("/css", StaticFiles(directory=str(ROOT_DIR / "css")), name="css")
+if (ROOT_DIR / "js").exists():
+    app.mount("/js", StaticFiles(directory=str(ROOT_DIR / "js")), name="js")
 if FRONTEND_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 
 @app.get("/")
 def serve_index():
+    root_index = ROOT_DIR / "index.html"
+    if root_index.exists():
+        return FileResponse(str(root_index))
     index_path = FRONTEND_DIR / "index.html"
     if index_path.exists():
         return FileResponse(str(index_path))
     return {"message": "Frontend static file will be available shortly."}
+
+
