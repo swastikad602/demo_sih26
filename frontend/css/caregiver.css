@@ -165,3 +165,50 @@
   font-weight: 700;
   font-size: 0.85rem;
 }
+
+/* Caregiver alarm and reminder manager */
+.reminder-manager-panel { margin-top: 24px; }
+.scheduled-reminder-list, .reminder-outcome-list { display: flex; flex-direction: column; gap: 10px; }
+.scheduled-reminder-card {
+  display: grid;
+  grid-template-columns: auto 88px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid #D1FAE5;
+  background: #F0FDFA;
+  border-radius: var(--border-radius-md);
+}
+.scheduled-reminder-card.is-paused { opacity: .62; background: #F8FAFC; border-color: #E2E8F0; }
+.scheduled-time { color: var(--primary-dark); font-size: 1.05rem; font-weight: 800; }
+.scheduled-reminder-details { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.scheduled-reminder-details span, .scheduled-reminder-details small { color: var(--text-secondary); font-size: .85rem; }
+.scheduled-reminder-actions, .reminder-form-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn-danger { background: #FFF1F2; border: 1px solid #FDA4AF; color: #BE123C; }
+.schedule-toggle { position: relative; display: inline-block; width: 42px; height: 24px; cursor: pointer; }
+.schedule-toggle input { opacity: 0; width: 0; height: 0; }
+.schedule-toggle span { position: absolute; inset: 0; border-radius: 999px; background: #CBD5E1; transition: .2s; }
+.schedule-toggle span::before { content: ''; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px; border-radius: 50%; background: #FFF; transition: .2s; }
+.schedule-toggle input:checked + span { background: var(--primary-color); }
+.schedule-toggle input:checked + span::before { transform: translateX(18px); }
+.empty-reminders { padding: 18px; color: var(--text-secondary); border: 1px dashed #CBD5E1; border-radius: var(--border-radius-md); text-align: center; }
+.reminder-editor-form { margin: 16px 0; padding: 16px; background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: var(--border-radius-md); }
+.reminder-form-heading { margin-bottom: 12px; color: var(--primary-dark); font-size: 1.1rem; font-weight: 800; }
+.reminder-form-grid { display: grid; grid-template-columns: 1.3fr .7fr 1fr 1.4fr; gap: 12px; }
+.reminder-form-grid label { display: flex; flex-direction: column; gap: 5px; color: var(--text-secondary); font-size: .85rem; font-weight: 700; }
+.repeat-days { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0; border: 0; padding: 0; }
+.repeat-days legend { width: 100%; color: var(--text-secondary); font-size: .9rem; font-weight: 700; }
+.repeat-days label { font-size: .85rem; }
+.reminder-outcome { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 11px 12px; border-radius: var(--border-radius-md); background: #F8FAFC; border-left: 4px solid #94A3B8; }
+.reminder-outcome.completed { border-left-color: #10B981; }
+.reminder-outcome.missed { border-left-color: #EF4444; }
+.reminder-outcome div { display: flex; flex-direction: column; gap: 3px; }
+.reminder-outcome small { color: var(--text-muted); }
+.reminder-outcome > span { font-size: .82rem; font-weight: 700; text-align: right; }
+
+@media (max-width: 760px) {
+  .scheduled-reminder-card { grid-template-columns: auto 1fr; }
+  .scheduled-time { grid-column: 2; grid-row: 1; }
+  .scheduled-reminder-details, .scheduled-reminder-actions { grid-column: 2; }
+  .reminder-form-grid { grid-template-columns: 1fr; }
+}

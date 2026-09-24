@@ -23,6 +23,8 @@ def main():
         seed_database()
     else:
         print("[+] Database verified at:", db_file)
+        # Apply non-destructive schema additions for existing installations.
+        init_db()
         
     print("\n[+] Starting FastAPI Web Server & REST API...")
     print("[*] Local Web App URL: http://127.0.0.1:8000")

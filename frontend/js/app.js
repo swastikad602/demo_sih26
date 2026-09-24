@@ -26,6 +26,7 @@ const AppState = {
     
     // 6. Set initial role view
     this.switchRole('patient');
+    ReminderSystem.startScheduleMonitor();
     
     // Register Service Worker if supported
     if ('serviceWorker' in navigator) {
@@ -70,6 +71,13 @@ const AppState = {
         emergency_contact: "+91 98640 12345 (Son: Siddhartha Gogoi)"
       };
       await DB.putItem('patients', defaultPat);
+      const defaultSchedules = [
+        { id: 'sched-default-walk', patient_id: defaultPat.id, category: 'walk', title: 'Morning Garden Walk', description: 'Take a gentle walk and enjoy some sunlight.', reminder_time: '07:00', days_of_week: [], is_enabled: true },
+        { id: 'sched-default-medicine', patient_id: defaultPat.id, category: 'medication', title: 'Morning Donepezil', description: 'Take Donepezil 5 mg with water after breakfast.', reminder_time: '08:00', days_of_week: [], is_enabled: true },
+        { id: 'sched-default-brain-gym', patient_id: defaultPat.id, category: 'brain_gym', title: 'Brain Gym Time', description: 'Spend a few minutes with your memory exercises.', reminder_time: '10:30', days_of_week: [], is_enabled: true },
+        { id: 'sched-default-hydration', patient_id: defaultPat.id, category: 'hydration', title: 'Hydration Check', description: 'Please drink a glass of water with lunch.', reminder_time: '13:00', days_of_week: [], is_enabled: true }
+      ];
+      for (const schedule of defaultSchedules) await DB.queueForSync('scheduled_reminder', schedule);
       this.allPatients = [defaultPat];
     }
     
@@ -129,7 +137,7 @@ const AppState = {
     }
   },
   
-  renderPatientHome() {
+  async renderPatientHome() {
     const p = this.currentPatient || {};
     const welcomeTitle = document.getElementById('patient-welcome-name');
     if (welcomeTitle) {
@@ -139,7 +147,12 @@ const AppState = {
     // Render Daily Schedule
     const scheduleList = document.getElementById('patient-routine-list');
     if (scheduleList) {
-      const routine = (p.daily_routine && p.daily_routine.length > 0) ? p.daily_routine : [
+      const scheduledReminders = (await DB.getAllItems('scheduled_reminders'))
+        .filter(item => item.patient_id === p.id && item.is_enabled)
+        .sort((a, b) => a.reminder_time.localeCompare(b.reminder_time));
+      const routine = scheduledReminders.length ? scheduledReminders.map(item => ({
+        time: this.formatReminderTime(item.reminder_time), activity: item.title, icon: item.category
+      })) : (p.daily_routine && p.daily_routine.length > 0) ? p.daily_routine : [
         { time: "08:00 AM", activity: "Breakfast & Morning Pill", icon: "medication" },
         { time: "10:30 AM", activity: "Memory Games", icon: "game" },
         { time: "01:00 PM", activity: "Nutritious Lunch", icon: "food" },
@@ -175,6 +188,12 @@ const AppState = {
     document.getElementById('patient-home-view').style.display = 'block';
     document.getElementById('patient-game-view').style.display = 'none';
     document.getElementById('patient-chat-view').style.display = 'none';
+  },
+
+  formatReminderTime(time) {
+    if (!time || !/^\d{2}:\d{2}$/.test(time)) return time || '';
+    const [hour, minute] = time.split(':').map(Number);
+    return `${hour % 12 || 12}:${String(minute).padStart(2, '0')} ${hour >= 12 ? 'PM' : 'AM'}`;
   },
   
   // Voice Synthesis Toggle

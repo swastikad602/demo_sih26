@@ -11,7 +11,8 @@ from pathlib import Path
 from database import get_db_connection, init_db
 from schemas import (
     PatientCreateSchema, GameSessionCreateSchema, ReminderLogCreateSchema,
-    AlertCreateSchema, DoctorNoteCreateSchema, BatchSyncPayload, FamilyMemberSchema
+    AlertCreateSchema, DoctorNoteCreateSchema, BatchSyncPayload, FamilyMemberSchema,
+    ScheduledReminderSchema
 )
 
 app = FastAPI(
@@ -305,7 +306,7 @@ def record_reminder_log(payload: ReminderLogCreateSchema):
     ))
     
     # If no response after 90s follow-up or confused response, create caregiver alert
-    if payload.status in ["no_response_90s", "confused_response"]:
+    if payload.status in ["no_response_90s", "confused_response", "missed"]:
         alt_id = f"alt-{uuid.uuid4().hex[:6]}"
         cursor.execute("""
         INSERT INTO alerts (id, patient_id, alert_type, title, message, severity, timestamp)
@@ -320,6 +321,79 @@ def record_reminder_log(payload: ReminderLogCreateSchema):
     conn.commit()
     conn.close()
     return {"message": "Reminder log recorded", "log_id": log_id}
+
+# --- Caregiver-managed alarm and reminder schedules ---
+
+@app.get("/api/scheduled-reminders")
+def get_scheduled_reminders(patient_id: Optional[str] = None):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    query = "SELECT * FROM scheduled_reminders"
+    params = []
+    if patient_id:
+        query += " WHERE patient_id = ?"
+        params.append(patient_id)
+    query += " ORDER BY reminder_time ASC"
+    cursor.execute(query, params)
+    reminders = [row_to_dict(row) for row in cursor.fetchall()]
+    for reminder in reminders:
+        try:
+            reminder["days_of_week"] = json.loads(reminder["days_of_week"] or "[]")
+        except (TypeError, json.JSONDecodeError):
+            reminder["days_of_week"] = []
+        reminder["is_enabled"] = bool(reminder["is_enabled"])
+    conn.close()
+    return reminders
+
+@app.post("/api/scheduled-reminders")
+def create_scheduled_reminder(payload: ScheduledReminderSchema):
+    reminder_id = payload.id or f"sched-{uuid.uuid4().hex[:8]}"
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO scheduled_reminders
+        (id, patient_id, category, title, description, reminder_time, days_of_week, is_enabled, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        reminder_id, payload.patient_id, payload.category, payload.title,
+        payload.description, payload.reminder_time, json.dumps(payload.days_of_week or []),
+        int(payload.is_enabled), datetime.now().isoformat()
+    ))
+    conn.commit()
+    conn.close()
+    return {"message": "Scheduled reminder created", "id": reminder_id}
+
+@app.put("/api/scheduled-reminders/{reminder_id}")
+def update_scheduled_reminder(reminder_id: str, payload: ScheduledReminderSchema):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE scheduled_reminders SET category = ?, title = ?, description = ?,
+        reminder_time = ?, days_of_week = ?, is_enabled = ?, updated_at = ?
+        WHERE id = ? AND patient_id = ?
+    """, (
+        payload.category, payload.title, payload.description, payload.reminder_time,
+        json.dumps(payload.days_of_week or []), int(payload.is_enabled),
+        datetime.now().isoformat(), reminder_id, payload.patient_id
+    ))
+    if cursor.rowcount == 0:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Scheduled reminder not found")
+    conn.commit()
+    conn.close()
+    return {"message": "Scheduled reminder updated", "id": reminder_id}
+
+@app.delete("/api/scheduled-reminders/{reminder_id}")
+def delete_scheduled_reminder(reminder_id: str, patient_id: str = Query(...)):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM scheduled_reminders WHERE id = ? AND patient_id = ?", (reminder_id, patient_id))
+    if cursor.rowcount == 0:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Scheduled reminder not found")
+    conn.commit()
+    conn.close()
+    return {"message": "Scheduled reminder deleted", "id": reminder_id}
 
 # --- Alerts & Notifications ---
 
@@ -536,7 +610,8 @@ def batch_sync(payload: BatchSyncPayload):
         "game_sessions": 0,
         "reminder_logs": 0,
         "alerts": 0,
-        "doctor_notes": 0
+        "doctor_notes": 0,
+        "scheduled_reminders": 0
     }
     
     # Sync Patients
@@ -623,6 +698,24 @@ def batch_sync(payload: BatchSyncPayload):
                 dn.get("timestamp", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
             ))
             synced_counts["doctor_notes"] += 1
+
+    # Sync scheduled reminder changes made while offline.
+    if payload.scheduled_reminders:
+        for reminder in payload.scheduled_reminders:
+            cursor.execute("""
+            INSERT OR REPLACE INTO scheduled_reminders
+            (id, patient_id, category, title, description, reminder_time, days_of_week, is_enabled, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                reminder["id"], reminder["patient_id"], reminder.get("category", "routine"),
+                reminder["title"], reminder.get("description"), reminder["reminder_time"],
+                json.dumps(reminder.get("days_of_week", [])), int(reminder.get("is_enabled", True)),
+                datetime.now().isoformat()
+            ))
+            synced_counts["scheduled_reminders"] += 1
+
+    if payload.deleted_scheduled_reminder_ids:
+        cursor.executemany("DELETE FROM scheduled_reminders WHERE id = ?", [(reminder_id,) for reminder_id in payload.deleted_scheduled_reminder_ids])
 
     conn.commit()
     conn.close()

@@ -2,7 +2,7 @@
 
 const DB = {
   dbName: 'NERDementiaDB',
-  version: 1,
+  version: 2,
   db: null,
   isOnline: true,
   isSyncing: false,
@@ -26,6 +26,11 @@ const DB = {
           const store = db.createObjectStore('reminder_logs', { keyPath: 'id' });
           store.createIndex('patient_id', 'patient_id', { unique: false });
           store.createIndex('timestamp', 'timestamp', { unique: false });
+        }
+        if (!db.objectStoreNames.contains('scheduled_reminders')) {
+          const store = db.createObjectStore('scheduled_reminders', { keyPath: 'id' });
+          store.createIndex('patient_id', 'patient_id', { unique: false });
+          store.createIndex('reminder_time', 'reminder_time', { unique: false });
         }
         if (!db.objectStoreNames.contains('alerts')) {
           const store = db.createObjectStore('alerts', { keyPath: 'id' });
@@ -125,7 +130,7 @@ const DB = {
   // Queue item for background sync
   async queueForSync(type, data) {
     const outboxItem = {
-      type: type, // 'patient', 'game_session', 'reminder_log', 'alert', 'doctor_note'
+      type: type, // patient, game_session, reminder_log, alert, doctor_note, scheduled_reminder
       data: data,
       created_at: new Date().toISOString()
     };
@@ -136,7 +141,8 @@ const DB = {
       'game_session': 'game_sessions',
       'reminder_log': 'reminder_logs',
       'alert': 'alerts',
-      'doctor_note': 'doctor_notes'
+      'doctor_note': 'doctor_notes',
+      'scheduled_reminder': 'scheduled_reminders'
     };
     if (storeMap[type]) {
       await this.putItem(storeMap[type], data);
@@ -151,6 +157,21 @@ const DB = {
     if (this.isOnline) {
       this.triggerBackgroundSync();
     }
+  },
+
+  async deleteScheduledReminder(reminder) {
+    const tx = this.db.transaction(['scheduled_reminders', 'sync_outbox'], 'readwrite');
+    tx.objectStore('scheduled_reminders').delete(reminder.id);
+    tx.objectStore('sync_outbox').add({
+      type: 'scheduled_reminder_delete',
+      data: { id: reminder.id, patient_id: reminder.patient_id },
+      created_at: new Date().toISOString()
+    });
+    await new Promise((resolve, reject) => {
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+    });
+    if (this.isOnline) this.triggerBackgroundSync();
   },
   
   // Sync background outbox to server
@@ -170,7 +191,9 @@ const DB = {
         game_sessions: [],
         reminder_logs: [],
         alerts: [],
-        doctor_notes: []
+        doctor_notes: [],
+        scheduled_reminders: [],
+        deleted_scheduled_reminder_ids: []
       };
       
       outboxItems.forEach(item => {
@@ -179,6 +202,8 @@ const DB = {
         else if (item.type === 'reminder_log') payload.reminder_logs.push(item.data);
         else if (item.type === 'alert') payload.alerts.push(item.data);
         else if (item.type === 'doctor_note') payload.doctor_notes.push(item.data);
+        else if (item.type === 'scheduled_reminder') payload.scheduled_reminders.push(item.data);
+        else if (item.type === 'scheduled_reminder_delete') payload.deleted_scheduled_reminder_ids.push(item.data.id);
       });
       
       const res = await fetch('/api/sync/batch', {
@@ -216,6 +241,14 @@ const DB = {
         const alerts = await alertRes.json();
         for (const a of alerts) {
           await this.putItem('alerts', a);
+        }
+      }
+
+      const schedulesRes = await fetch('/api/scheduled-reminders');
+      if (schedulesRes.ok) {
+        const schedules = await schedulesRes.json();
+        for (const schedule of schedules) {
+          await this.putItem('scheduled_reminders', schedule);
         }
       }
     } catch (e) {

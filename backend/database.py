@@ -91,6 +91,25 @@ def init_db():
     )
     """)
 
+    # Caregiver-managed recurring alarms and reminders.  These are kept
+    # separately from reminder_logs: a schedule is the instruction, while a
+    # log is the patient's outcome for one occurrence of that instruction.
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS scheduled_reminders (
+        id TEXT PRIMARY KEY,
+        patient_id TEXT NOT NULL,
+        category TEXT NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT,
+        reminder_time TEXT NOT NULL,
+        days_of_week TEXT DEFAULT '[]',
+        is_enabled INTEGER DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (patient_id) REFERENCES patients(id)
+    )
+    """)
+
     # Table: Caregiver Alerts
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS alerts (

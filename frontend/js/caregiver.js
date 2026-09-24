@@ -1,212 +1,100 @@
-// Caregiver Monitoring & Patient Care Dashboard Controller
+// Caregiver monitoring dashboard and recurring alarm manager.
 
 const CaregiverView = {
-  async init() {
-    await this.refresh();
-  },
-  
+  async init() { await this.refresh(); },
+
   async refresh() {
     const container = document.getElementById('caregiver-content');
     if (!container) return;
-    
     const patient = AppState.currentPatient || {};
     const patientId = patient.id || 'pat-ner-001';
-    
-    // Fetch local or synced alerts & logs
-    const allAlerts = await DB.getAllItems('alerts');
-    const patientAlerts = allAlerts.filter(a => a.patient_id === patientId);
-    
-    const allSessions = await DB.getAllItems('game_sessions');
-    const patientSessions = allSessions.filter(s => s.patient_id === patientId).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    
-    const allRemLogs = await DB.getAllItems('reminder_logs');
-    const patientRemLogs = allRemLogs.filter(r => r.patient_id === patientId).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    
-    // Compute stats
-    const totalSessions = patientSessions.length;
-    const avgAccuracy = totalSessions > 0 ? Math.round(patientSessions.reduce((acc, s) => acc + s.accuracy_pct, 0) / totalSessions) : 80;
-    const unreadAlerts = patientAlerts.filter(a => !a.is_read);
-    
-    // Check for performance decline alert
-    const recent5 = patientSessions.slice(0, 5);
-    const hasDecline = recent5.some(s => s.accuracy_pct < 55);
-    
+    const [allAlerts, allSessions, allLogs, allSchedules] = await Promise.all([
+      DB.getAllItems('alerts'), DB.getAllItems('game_sessions'), DB.getAllItems('reminder_logs'), DB.getAllItems('scheduled_reminders')
+    ]);
+    const patientAlerts = allAlerts.filter(item => item.patient_id === patientId);
+    const patientSessions = allSessions.filter(item => item.patient_id === patientId).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    const patientLogs = allLogs.filter(item => item.patient_id === patientId).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    const schedules = allSchedules.filter(item => item.patient_id === patientId).sort((a, b) => a.reminder_time.localeCompare(b.reminder_time));
+    const unreadAlerts = patientAlerts.filter(item => !item.is_read);
+    const completed = patientLogs.filter(item => this.isCompleted(item.status)).length;
+    const adherence = patientLogs.length ? Math.round((completed / patientLogs.length) * 100) : 0;
+    const averageAccuracy = patientSessions.length ? Math.round(patientSessions.reduce((total, item) => total + item.accuracy_pct, 0) / patientSessions.length) : 0;
+
     container.innerHTML = `
       <div class="caregiver-header-banner">
-        <div>
-          <h2 style="margin:0 0 4px 0; font-size:1.6rem; color:var(--text-primary);">
-            Caregiver Hub: Monitoring <strong>${patient.name || 'Biren Gogoi'}</strong>
-          </h2>
-          <p style="margin:0; color:var(--text-secondary); font-size:1rem;">
-            State: <strong>${patient.state || 'Assam'}</strong> | Condition Stage: <strong>${patient.condition_stage || 'Mild Cognitive Impairment'}</strong> (Physician-Diagnosed)
-          </p>
-        </div>
-        
-        <div class="caregiver-quick-actions">
-          <button class="btn btn-outline" onclick="CaregiverView.openRoutineEditor()">
-            ⚙️ Edit Daily Routine & Meds
-          </button>
-          <button class="btn btn-primary" onclick="CaregiverView.triggerSampleReminder()">
-            🔔 Test Patient 90s Reminder
-          </button>
-        </div>
+        <div><h2 style="margin:0 0 4px; font-size:1.6rem; color:var(--text-primary);">Caregiver Hub: Monitoring <strong>${this.escapeHtml(patient.name || 'Patient')}</strong></h2><p style="margin:0; color:var(--text-secondary);">Set alarms, review task outcomes, and act on missed reminders.</p></div>
+        <div class="caregiver-quick-actions"><button class="btn btn-outline" onclick="CaregiverView.openReminderEditor()">Manage alarms & reminders</button><button class="btn btn-primary" onclick="CaregiverView.triggerNextReminder()">Test patient reminder</button></div>
       </div>
-      
-      <!-- Critical Live Alert Notification Banner -->
-      ${unreadAlerts.length > 0 ? `
-        <div class="caregiver-alert-box ${hasDecline ? 'critical' : 'warning'}">
-          <div class="alert-box-header">
-            <span class="alert-bell-icon">🚨</span>
-            <div style="flex:1;">
-              <h3 style="margin:0 0 4px 0; font-size:1.2rem; color:var(--text-primary);">
-                Active Caregiver Alerts (${unreadAlerts.length})
-              </h3>
-              <p style="margin:0; font-size:0.95rem; color:var(--text-secondary);">
-                Immediate notification regarding patient cognitive trends and medication adherence.
-              </p>
-            </div>
-          </div>
-          
-          <div class="alert-list-items">
-            ${unreadAlerts.map(alt => `
-              <div class="alert-item-card ${alt.severity}">
-                <div>
-                  <strong style="color:var(--text-primary); font-size:1.05rem;">${alt.title}</strong>
-                  <p style="margin:4px 0; font-size:0.95rem; color:var(--text-secondary);">${alt.message}</p>
-                  <span style="font-size:0.8rem; color:var(--text-muted);">Timestamp: ${alt.timestamp}</span>
-                </div>
-                <button class="btn btn-sm btn-outline" onclick="CaregiverView.markAlertRead('${alt.id}')">
-                  Mark Read
-                </button>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      ` : `
-        <div class="caregiver-alert-box good-standing">
-          <span style="font-size:1.8rem;">✨</span>
-          <div>
-            <strong>All Systems Stable:</strong> No active cognitive decline or missed medication warnings for ${patient.name || 'patient'}.
-          </div>
-        </div>
-      `}
-      
-      <!-- Single-Delivery Caregiver Notification Summary Notice -->
-      <div class="info-callout-card">
-        <span class="info-icon">ℹ️</span>
-        <div style="font-size:0.95rem; color:var(--text-secondary);">
-          <strong>Single-Delivery Reminders Active:</strong> You receive scheduled alerts <em>once</em> at event time (no 90-second repeat loop) to prevent alert fatigue, while the patient interface provides a peaceful 90s non-intrusive processing window.
-        </div>
-      </div>
-      
-      <!-- Progress Analytics KPI Grid -->
+      ${unreadAlerts.length ? `<div class="caregiver-alert-box warning"><div class="alert-box-header"><span class="alert-bell-icon">!</span><div><h3 style="margin:0;">Caregiver notifications (${unreadAlerts.length})</h3><p style="margin:4px 0 0;">A patient needs attention or has missed a task.</p></div></div><div class="alert-list-items">${unreadAlerts.map(alert => `<div class="alert-item-card ${alert.severity}"><div><strong>${this.escapeHtml(alert.title)}</strong><p style="margin:4px 0;">${this.escapeHtml(alert.message)}</p><small>${alert.timestamp}</small></div><button class="btn btn-sm btn-outline" onclick="CaregiverView.markAlertRead('${alert.id}')">Mark read</button></div>`).join('')}</div></div>` : `<div class="caregiver-alert-box good-standing"><strong>All clear:</strong>&nbsp; no unread task or wellbeing alerts for ${this.escapeHtml(patient.name || 'this patient')}.</div>`}
       <div class="kpi-grid">
-        <div class="kpi-card">
-          <span class="kpi-title">Current AI Difficulty Level</span>
-          <span class="kpi-val primary">Level ${patient.current_difficulty || 1}</span>
-          <span class="kpi-sub">Personalized based on reaction time</span>
-        </div>
-        <div class="kpi-card">
-          <span class="kpi-title">Average Cognitive Accuracy</span>
-          <span class="kpi-val green">${avgAccuracy}%</span>
-          <span class="kpi-sub">Across last ${totalSessions} sessions</span>
-        </div>
-        <div class="kpi-card">
-          <span class="kpi-title">Routine & Medication Adherence</span>
-          <span class="kpi-val amber">88.5%</span>
-          <span class="kpi-sub">On-time reminder response rate</span>
-        </div>
-        <div class="kpi-card">
-          <span class="kpi-title">Emergency Contact</span>
-          <span class="kpi-val" style="font-size:1.1rem; color:var(--text-primary);">${patient.emergency_contact || '+91 98640 12345'}</span>
-          <span class="kpi-sub">Direct telephone line</span>
-        </div>
+        <div class="kpi-card"><span class="kpi-title">Active alarms</span><span class="kpi-val primary">${schedules.filter(item => item.is_enabled).length}</span><span class="kpi-sub">${schedules.length} configured</span></div>
+        <div class="kpi-card"><span class="kpi-title">Task adherence</span><span class="kpi-val green">${adherence}%</span><span class="kpi-sub">${completed} completed of ${patientLogs.length} recorded</span></div>
+        <div class="kpi-card"><span class="kpi-title">Cognitive accuracy</span><span class="kpi-val amber">${averageAccuracy}%</span><span class="kpi-sub">Across ${patientSessions.length} sessions</span></div>
+        <div class="kpi-card"><span class="kpi-title">Emergency contact</span><span class="kpi-val" style="font-size:1rem; color:var(--text-primary);">${this.escapeHtml(patient.emergency_contact || 'Not set')}</span></div>
       </div>
-      
-      <!-- Split View: Recent Cognitive Activity & Routine Timeline -->
+      <section class="panel-card reminder-manager-panel">
+        <div class="panel-header"><div><h3 style="margin:0; font-size:1.3rem;">Alarms & Daily Task Reminders</h3><p style="margin:4px 0 0; color:var(--text-secondary); font-size:.92rem;">Recurring patient reminders for walks, brain gym, medicines, hydration, appointments, meals, and custom tasks.</p></div><button class="btn btn-primary" onclick="CaregiverView.openReminderEditor()">+ Add reminder</button></div>
+        <div id="caregiver-reminder-form"></div>
+        <div class="scheduled-reminder-list">${schedules.length ? schedules.map(reminder => `<article class="scheduled-reminder-card ${reminder.is_enabled ? '' : 'is-paused'}"><label class="schedule-toggle" title="Enable or pause"><input type="checkbox" ${reminder.is_enabled ? 'checked' : ''} onchange="CaregiverView.toggleScheduledReminder('${reminder.id}', this.checked)"><span></span></label><div class="scheduled-time">${this.displayTime(reminder.reminder_time)}</div><div class="scheduled-reminder-details"><strong>${this.escapeHtml(reminder.title)}</strong><span>${this.escapeHtml(reminder.category.replaceAll('_', ' '))} · ${this.displayDays(reminder.days_of_week)}</span>${reminder.description ? `<small>${this.escapeHtml(reminder.description)}</small>` : ''}</div><div class="scheduled-reminder-actions"><button class="btn btn-sm btn-outline" onclick="CaregiverView.openReminderEditor('${reminder.id}')">Edit</button><button class="btn btn-sm btn-danger" onclick="CaregiverView.deleteScheduledReminder('${reminder.id}')">Delete</button></div></article>`).join('') : `<div class="empty-reminders">No reminders set yet. Add an alarm to begin the daily routine.</div>`}</div>
+      </section>
       <div class="caregiver-two-col">
-        <!-- Col 1: Recent Game Sessions -->
-        <div class="panel-card">
-          <div class="panel-header">
-            <h3 style="margin:0; font-size:1.25rem;">🎮 Recent Cognitive Game Sessions</h3>
-            <span class="badge">${patientSessions.length} Recorded</span>
-          </div>
-          
-          <div class="table-responsive">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Game Type</th>
-                  <th>Level</th>
-                  <th>Accuracy</th>
-                  <th>Time</th>
-                  <th>AI Adaptation Note</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${patientSessions.slice(0, 6).map(s => `
-                  <tr>
-                    <td><strong>${s.game_type.replace('_', ' ').toUpperCase()}</strong></td>
-                    <td><span class="level-tag">L${s.difficulty_level}</span></td>
-                    <td><span class="badge ${s.accuracy_pct >= 75 ? 'green' : 'amber'}">${s.accuracy_pct.toFixed(0)}%</span></td>
-                    <td>${s.avg_response_time_sec.toFixed(1)}s</td>
-                    <td style="font-size:0.85rem; color:var(--text-secondary); max-width:200px;">${s.adaptation_reason || 'Consistent'}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
-        </div>
-        
-        <!-- Col 2: Daily Routine & Medication Schedule -->
-        <div class="panel-card">
-          <div class="panel-header">
-            <h3 style="margin:0; font-size:1.25rem;">⏰ Today's Prescribed Routine</h3>
-            <span class="badge green">Active</span>
-          </div>
-          
-          <div class="timeline-list">
-            ${((patient.daily_routine && patient.daily_routine.length > 0) ? patient.daily_routine : [
-              { time: "08:00 AM", activity: "Breakfast & Donepezil 5mg", icon: "medication" },
-              { time: "10:30 AM", activity: "Cognitive Memory Games", icon: "game" },
-              { time: "01:00 PM", activity: "Lunch & Senior Multivitamin", icon: "food" },
-              { time: "05:00 PM", activity: "Assam Tea & Mitra Voice Chat", icon: "chat" },
-              { time: "08:30 PM", activity: "Dinner & BP Medication", icon: "medication" }
-            ]).map(r => `
-              <div class="timeline-item">
-                <span class="timeline-time">${r.time}</span>
-                <div class="timeline-dot"></div>
-                <div class="timeline-content">
-                  <strong>${r.activity}</strong>
-                </div>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      </div>
-    `;
+        <section class="panel-card"><div class="panel-header"><h3 style="margin:0;">Recent task outcomes</h3><span class="badge">${patientLogs.length} recorded</span></div><div class="reminder-outcome-list">${patientLogs.length ? patientLogs.slice(0, 8).map(log => `<div class="reminder-outcome ${this.isCompleted(log.status) ? 'completed' : 'missed'}"><div><strong>${this.escapeHtml(log.title)}</strong><small>${log.acknowledged_at || log.timestamp}</small></div><span>${this.statusLabel(log.status)}</span></div>`).join('') : '<p style="color:var(--text-secondary);">Completion and missed-task reports will appear here.</p>'}</div></section>
+        <section class="panel-card"><div class="panel-header"><h3 style="margin:0;">Recent cognitive activity</h3><span class="badge">${patientSessions.length} recorded</span></div><div class="reminder-outcome-list">${patientSessions.length ? patientSessions.slice(0, 6).map(session => `<div class="reminder-outcome completed"><div><strong>${this.escapeHtml(session.game_type.replaceAll('_', ' '))}</strong><small>${session.timestamp}</small></div><span>${Math.round(session.accuracy_pct)}%</span></div>`).join('') : '<p style="color:var(--text-secondary);">No game sessions recorded yet.</p>'}</div></section>
+      </div>`;
   },
-  
+
+  displayTime(time) {
+    if (!time || !/^\d{2}:\d{2}$/.test(time)) return time || 'No time';
+    const [hour, minute] = time.split(':').map(Number);
+    return `${hour % 12 || 12}:${String(minute).padStart(2, '0')} ${hour >= 12 ? 'PM' : 'AM'}`;
+  },
+  displayDays(days) { return !days || !days.length ? 'Every day' : days.join(', '); },
+  isCompleted(status) { return ['acknowledged_on_time', 'acknowledged_after_followup'].includes(status); },
+  statusLabel(status) { return ({ acknowledged_on_time: 'Completed on time', acknowledged_after_followup: 'Completed after follow-up', confused_response: 'Needs help', no_response_90s: 'Missed', missed: 'Missed' })[status] || status.replaceAll('_', ' '); },
+
   async markAlertRead(alertId) {
     const alert = await DB.getItem('alerts', alertId);
-    if (alert) {
-      alert.is_read = 1;
-      await DB.putItem('alerts', alert);
-      // Sync update if online
-      fetch(`/api/alerts/${alertId}/read`, { method: 'PUT' }).catch(() => {});
-      this.refresh();
-    }
+    if (!alert) return;
+    alert.is_read = 1;
+    await DB.queueForSync('alert', alert);
+    fetch(`/api/alerts/${alertId}/read`, { method: 'PUT' }).catch(() => {});
+    await this.refresh();
   },
-  
-  triggerSampleReminder() {
-    ReminderSystem.triggerReminder({
-      category: 'medication',
-      title: 'Morning Donepezil 5mg Reminder',
-      description: 'Take with 1 glass of warm water after breakfast.'
-    });
+  async triggerNextReminder() {
+    const patientId = AppState.currentPatient?.id || 'pat-ner-001';
+    const schedules = (await DB.getAllItems('scheduled_reminders')).filter(item => item.patient_id === patientId && item.is_enabled);
+    ReminderSystem.triggerReminder(schedules[0] || { category: 'routine', title: 'Sample daily routine reminder', description: 'This is how a patient task reminder will appear.' });
   },
-  
-  openRoutineEditor() {
-    alert("Routine & Medication editor: You can add or modify schedule items in the Patient Onboarding modal or edit directly.");
-  }
+  async openReminderEditor(reminderId = null) {
+    const formContainer = document.getElementById('caregiver-reminder-form');
+    if (!formContainer) return;
+    const schedules = await DB.getAllItems('scheduled_reminders');
+    const existing = schedules.find(item => item.id === reminderId) || { category: 'routine', title: '', description: '', reminder_time: '08:00', days_of_week: [] };
+    const categories = ['routine', 'medication', 'hydration', 'brain_gym', 'appointment', 'walk', 'meal'];
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    formContainer.innerHTML = `<form class="reminder-editor-form" onsubmit="CaregiverView.saveScheduledReminder(event, '${reminderId || ''}')"><div class="reminder-form-heading">${reminderId ? 'Edit reminder' : 'New reminder'}</div><div class="reminder-form-grid"><label>Task / alarm name<input id="schedule-title" class="form-input" required maxlength="100" value="${this.escapeHtml(existing.title)}" placeholder="e.g. Morning walk"></label><label>Time<input id="schedule-time" class="form-input" required type="time" value="${existing.reminder_time}"></label><label>Category<select id="schedule-category" class="form-select">${categories.map(category => `<option value="${category}" ${existing.category === category ? 'selected' : ''}>${category.replaceAll('_', ' ')}</option>`).join('')}</select></label><label>Details (optional)<input id="schedule-description" class="form-input" maxlength="180" value="${this.escapeHtml(existing.description || '')}" placeholder="e.g. Walk in the garden for 15 minutes"></label></div><fieldset class="repeat-days"><legend>Repeat on <small>(leave empty for every day)</small></legend>${days.map(day => `<label><input type="checkbox" value="${day}" ${existing.days_of_week?.includes(day) ? 'checked' : ''}>${day}</label>`).join('')}</fieldset><div class="reminder-form-actions"><button type="button" class="btn btn-secondary" onclick="CaregiverView.closeReminderEditor()">Cancel</button><button type="submit" class="btn btn-primary">${reminderId ? 'Save changes' : 'Create reminder'}</button></div></form>`;
+  },
+  closeReminderEditor() { const node = document.getElementById('caregiver-reminder-form'); if (node) node.innerHTML = ''; },
+  async saveScheduledReminder(event, reminderId) {
+    event.preventDefault();
+    const days = [...document.querySelectorAll('#caregiver-reminder-form .repeat-days input:checked')].map(input => input.value);
+    const reminder = { id: reminderId || `sched-${Date.now()}`, patient_id: AppState.currentPatient?.id || 'pat-ner-001', title: document.getElementById('schedule-title').value.trim(), reminder_time: document.getElementById('schedule-time').value, category: document.getElementById('schedule-category').value, description: document.getElementById('schedule-description').value.trim(), days_of_week: days, is_enabled: true };
+    await DB.queueForSync('scheduled_reminder', reminder);
+    this.closeReminderEditor();
+    await this.refresh();
+  },
+  async toggleScheduledReminder(reminderId, isEnabled) {
+    const reminder = await DB.getItem('scheduled_reminders', reminderId);
+    if (!reminder) return;
+    reminder.is_enabled = isEnabled;
+    await DB.queueForSync('scheduled_reminder', reminder);
+    await this.refresh();
+  },
+  async deleteScheduledReminder(reminderId) {
+    const reminder = await DB.getItem('scheduled_reminders', reminderId);
+    if (!reminder || !confirm(`Delete the reminder "${reminder.title}"?`)) return;
+    await DB.deleteScheduledReminder(reminder);
+    await this.refresh();
+  },
+  escapeHtml(value) { return String(value || '').replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[char]); }
 };

@@ -56,6 +56,16 @@ class ReminderLogCreateSchema(BaseModel):
     discrepancy_note: Optional[str] = None
     timestamp: Optional[str] = None
 
+class ScheduledReminderSchema(BaseModel):
+    id: Optional[str] = None
+    patient_id: str
+    category: str = "routine"
+    title: str
+    description: Optional[str] = None
+    reminder_time: str
+    days_of_week: Optional[List[str]] = []
+    is_enabled: Optional[bool] = True
+
 class AlertCreateSchema(BaseModel):
     id: Optional[str] = None
     patient_id: str
@@ -80,3 +90,5 @@ class BatchSyncPayload(BaseModel):
     reminder_logs: Optional[List[Dict[str, Any]]] = []
     alerts: Optional[List[Dict[str, Any]]] = []
     doctor_notes: Optional[List[Dict[str, Any]]] = []
+    scheduled_reminders: Optional[List[Dict[str, Any]]] = []
+    deleted_scheduled_reminder_ids: Optional[List[str]] = []

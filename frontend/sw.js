@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ner-dementia-care-v1';
+const CACHE_NAME = 'ner-dementia-care-v2';
 const STATIC_ASSETS = [
   '/',
   '/static/css/main.css',
